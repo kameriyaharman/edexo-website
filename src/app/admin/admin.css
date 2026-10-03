@@ -99,7 +99,8 @@ details[open] .a-panel-caret { transform: rotate(180deg); }
 .a-prefix { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--a-muted); font-weight: 700; pointer-events: none; }
 .a-input-wrap.is-select > select { appearance: none; -webkit-appearance: none; padding-right: 40px; cursor: pointer; }
 .a-caret { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); color: var(--a-muted); pointer-events: none; display: flex; }
-.a-count { position: absolute; right: 10px; bottom: 8px; font-size: 11.5px; color: var(--a-muted); background: rgba(255,255,255,.9); padding: 1px 6px; border-radius: 6px; pointer-events: none; }
+.a-input-wrap:has(.a-count) { flex-direction: column; }
+.a-count { align-self: flex-end; margin-top: 5px; font-size: 11.5px; color: var(--a-muted); }
 .a-count.over { color: #C0281B; font-weight: 700; }
 
 /* switch */

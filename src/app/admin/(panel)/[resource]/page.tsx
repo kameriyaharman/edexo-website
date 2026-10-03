@@ -47,6 +47,7 @@ export default async function ResourceList({ params, searchParams }: Props) {
     if (col === 'publishedAt') return formatDate(v);
     if (col === 'location') return f?.options?.find((o) => o.value === v)?.label ?? v;
     if (col === 'phones') return String(v ?? '').split('\n').join(', ');
+    if (col === 'hits') return <span className="muted" style={{ whiteSpace: 'nowrap' }}>{v ?? 0} {Number(v) === 1 ? 'visit' : 'visits'}</span>;
     return String(v ?? '');
   }
   const titleCol = res.columns.find((c) => !res.fields.find((f) => f.name === c && f.type === 'image')) ?? 'id';

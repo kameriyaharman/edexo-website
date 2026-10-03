@@ -222,10 +222,10 @@ function Card({ title, icon, children, collapsible, defaultOpen = true }: { titl
   );
 }
 
-function groupFields(fields: FieldProps[]) {
+function groupFields(fields: FieldProps[], isSettings = false) {
   const g = { details: [] as FieldProps[], content: [] as FieldProps[], media: [] as FieldProps[], publish: [] as FieldProps[], seo: [] as FieldProps[] };
   for (const f of fields) {
-    if (f.name.startsWith('seo')) g.seo.push(f);
+    if (f.name.startsWith('seo') && !isSettings) g.seo.push(f);
     else if (f.type === 'image') g.media.push(f);
     else if (f.type === 'boolean' || f.name === 'sort' || f.type === 'date') g.publish.push(f);
     else if (f.type === 'markdown') g.content.push(f);
@@ -255,7 +255,7 @@ export function AdminForm({ action, fields, hidden, submitLabel = 'Save', savedN
     return () => window.removeEventListener('beforeunload', warn);
   }, [dirty]);
 
-  const g = groupFields(fields);
+  const g = groupFields(fields, '__group' in hidden);
   const grid = (list: FieldProps[]) => <div className="a-fields">{list.map((f) => <Field key={f.name} {...f} />)}</div>;
   const saveBtn = (
     <button className="a-btn primary" type="submit" disabled={pending}>

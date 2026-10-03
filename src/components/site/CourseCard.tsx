@@ -15,7 +15,7 @@ export function CourseCard({ c }: { c: CourseCardData }) {
     <article className="card course-card">
       <div className="course-media">
         <Link href={href} tabIndex={-1} aria-hidden="true">
-          {img ? <img src={img} alt="" loading="lazy" /> : <div className="noimg" />}
+          {img ? <img src={img} alt={`${c.title} course at Edexo`} loading="lazy" /> : <div className="noimg" />}
         </Link>
         {c.languageCode && <span className="lang-badge">{c.languageCode}</span>}
       </div>

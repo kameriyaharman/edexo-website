@@ -120,6 +120,12 @@ export async function saveRecord(_: FormState, fd: FormData): Promise<FormState>
       values.slug = slug;
     }
     if ('sort' in values && values.sort === null) values.sort = 0;
+    if (res.key === 'redirects') {
+      const norm = (v: unknown) => { const t = String(v ?? '').trim(); return /^https?:/.test(t) ? t : ('/' + t.replace(/^https?:\/\/[^/]+/, '').replace(/^\/+/, '')).replace(/(.)\/+$/, '$1'); };
+      values.fromPath = norm(values.fromPath).split('?')[0];
+      values.toPath = norm(values.toPath);
+      if (values.fromPath === values.toPath) throw new Error('Old and new URL are the same');
+    }
     if ('rating' in values) values.rating = Math.min(5, Math.max(1, Number(values.rating) || 5));
     if (id) {
       await db.update(res.table).set({ ...values, updatedAt: new Date() }).where(eq(res.table.id, id));

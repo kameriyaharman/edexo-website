@@ -234,8 +234,79 @@ async function seedContent() {
   }
 }
 
+
+/* ---------- one-time upgrades for databases seeded by an earlier version ---------- */
+const OLD_REDIRECTS = [
+  ['/course/german-language-course-a1-level', '/courses/german-a1'], ['/course/german-language-course-a2-level', '/courses/german-a2'],
+  ['/course/german-language-course-b1-level', '/courses/german-b1'], ['/course/german-language-course-b2-level', '/courses/german-b2'],
+  ['/course/german-language-course-c1-level', '/courses/german-c1'], ['/course/german-language-course-c2-level', '/courses/german-c2'],
+  ['/course/french-language-course-a1-level', '/courses/french-a1'], ['/course/japanese-language-classes', '/courses/japanese'],
+  ['/course/italian-language-course', '/courses/italian'],
+  ['/german-a1-level', '/courses/german-a1'], ['/german-a2-level', '/courses/german-a2'], ['/german-b1-level', '/courses/german-b1'],
+  ['/german-b2-level', '/courses/german-b2'], ['/german-c1-level', '/courses/german-c1'], ['/german-c2-level', '/courses/german-c2'],
+  ['/french-a1-level', '/courses/french-a1'], ['/japanese', '/courses/japanese'], ['/italian', '/courses/italian'],
+  ['/german-language-classes-a1-c2', '/german-language'], ['/german-course-highlights', '/german-language'],
+  ['/french-language-classes-a1-level-c2-level', '/french-language'], ['/foreign-language', '/courses'],
+  ['/korean', '/courses'], ['/chinese', '/courses'], ['/spanish', '/courses'], ['/russian', '/courses'], ['/arabic', '/courses'],
+  ['/contact-us', '/contact'], ['/about-us', '/about'], ['/blogs', '/blog'],
+  ['/enroll-now', '/contact'], ['/register-now', '/contact'], ['/login', '/'], ['/student/dashboard', '/'],
+  ['/blog/german-a1-level-courses-in-dwarka-start-learning-german-today', '/blog/german-a1-course-in-dwarka'],
+  ['/blog/how-to-learn-german-fast-but-right-10-steps-for-more-effectively-studying', '/blog/learn-german-effectively-in-10-steps'],
+  ['/blog/study-in-germany-made-simple-with-edexo', '/blog/studying-in-germany-simplified'],
+  ['/blog/blog-1', '/blog'], ['/blog/blog-2', '/blog'], ['/blog/blog-3', '/blog'], ['/blog/blog-4', '/blog'], ['/blog/blog-5', '/blog'],
+];
+
+const CITY_PAGES = [
+  ['German Language Classes for Mumbai (Online)', 'german-language-courses-classes-mumbai', 'Mumbai'],
+  ['German Classes for Pune (Online)', 'german-classes-in-pune', 'Pune'],
+  ['German Language Classes for Jaipur (Online)', 'german-language-classes-in-jaipur', 'Jaipur'],
+];
+
+async function upgrades() {
+  const { rows } = await client.query('select data from settings where id = 1');
+  if (!rows.length) return;
+  const data = rows[0].data || {};
+  const done = new Set(data._upgrades || []);
+  const apply = async (id, fn) => { if (done.has(id)) return; await fn(data); done.add(id); console.log(`[seed] upgrade ${id} applied`); };
+
+  await apply('2026-10-seo-1', async (d) => {
+    const defaults = {
+      robotsIndex: true, footerLocationsTitle: 'Our Centres',
+      creditText: 'Developed by Custom E Solution', creditUrl: 'http://customesolution.com/',
+      coursesSeoTitle: 'German, French, Italian & Japanese Courses in Delhi',
+      coursesSeoDescription: 'German A1 to C2, French, Italian and Japanese courses at Edexo Rohini and Dwarka, Delhi — online and offline batches with a free demo class.',
+      blogSeoTitle: 'German Learning Blog — Tips & Study in Germany Guides',
+      blogSeoDescription: 'Tips, guides and news on learning German and studying or working in Germany from the Edexo team.',
+      contactSeoTitle: 'Contact Edexo — Rohini & Dwarka, Delhi',
+      contactSeoDescription: 'Visit Edexo in Rohini or Dwarka, Delhi, call us, or send a message to book a free German demo class.',
+    };
+    for (const [k, v] of Object.entries(defaults)) if (d[k] === undefined) d[k] = v;
+    for (const [i, [from, to]] of OLD_REDIRECTS.entries()) {
+      await client.query('insert into redirects (from_path, to_path, permanent, sort) values ($1,$2,true,$3) on conflict (from_path) do nothing', [from, to, i]);
+    }
+    for (const [title, slug, city] of CITY_PAGES) {
+      const content = `## Learn German from ${city} with Edexo\n\nEdexo runs live **online German classes** that you can join from ${city}, with the same trainers and course plan as our Rohini and Dwarka centres in Delhi.\n\n- Every level from **A1 to C2**\n- Small live batches with an expert trainer\n- Exam preparation and guidance for studying or working in Germany\n- Start with a **free demo class**\n\n[See all German courses](/courses?language=german)`;
+      await client.query(
+        `insert into pages (title, slug, subtitle, content, seo_title, seo_description) values ($1,$2,$3,$4,$5,$6) on conflict (slug) do nothing`,
+        [title, slug, `Live online German classes for learners in ${city}, A1 to C2.`, content,
+          `German Classes in ${city} — Online A1 to C2 | Edexo`, `Join live online German classes from ${city} with Edexo. A1 to C2 levels, expert trainers, exam preparation and a free demo class.`],
+      );
+    }
+    const { rows: m } = await client.query("select coalesce(max(sort),0) as s from menu_items where location = 'footer_useful'");
+    let sort = Number(m[0].s) + 1;
+    for (const [, slug, city] of CITY_PAGES) {
+      const exists = await client.query('select 1 from menu_items where href = $1', [`/${slug}`]);
+      if (!exists.rows.length) await client.query("insert into menu_items (label, href, location, sort) values ($1,$2,'footer_useful',$3)", [`German Classes in ${city}`, `/${slug}`, sort++]);
+    }
+  });
+
+  data._upgrades = [...done];
+  await client.query('update settings set data = $1, updated_at = now() where id = 1', [JSON.stringify(data)]);
+}
+
 try {
   await seedContent();
+  await upgrades();
   await ensureAdmin();
 } finally {
   await client.end();

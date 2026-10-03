@@ -1,9 +1,15 @@
 import type { MetadataRoute } from 'next';
+import { canIndex, siteUrl } from '@/lib/seo';
+import { getSettings } from '@/lib/settings';
 
-export default function robots(): MetadataRoute.Robots {
-  const base = (process.env.SITE_URL || 'http://localhost:3000').replace(/\/$/, '');
+export const dynamic = 'force-dynamic';
+
+export default async function robots(): Promise<MetadataRoute.Robots> {
+  const st = await getSettings();
+  if (!canIndex(st)) return { rules: [{ userAgent: '*', disallow: '/' }] };
   return {
     rules: [{ userAgent: '*', allow: '/', disallow: ['/admin', '/api'] }],
-    sitemap: `${base}/sitemap.xml`,
+    sitemap: `${siteUrl()}/sitemap.xml`,
+    host: siteUrl(),
   };
 }

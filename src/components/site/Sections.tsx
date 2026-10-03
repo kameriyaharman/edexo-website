@@ -34,7 +34,7 @@ export async function Hero() {
         </div>
         <div className="hero-visual" aria-hidden={!img}>
           <div className="circle" />
-          {img && <img className="photo" src={img} alt="" fetchPriority="high" />}
+          {img && <img className="photo" src={img} alt={`${s(st, 'siteName', 'Edexo')} German language student`} fetchPriority="high" />}
           {left.length > 0 && (
             <div className="float-card c1">{left.map((l) => <div className="row" key={l}><Icon name="check" size={16} stroke={3} color="#1A2E8C" />{l}</div>)}</div>
           )}
@@ -91,7 +91,7 @@ export async function AboutSection() {
       <div className="wrap">
         <div className="about-visual">
           <div className="ring" />
-          {img && <img src={img} alt="" loading="lazy" />}
+          {img && <img src={img} alt={`German class at ${s(st, 'siteName', 'Edexo')}`} loading="lazy" />}
           {s(st, 'aboutBadgeValue') && (
             <div className="card about-badge"><span className="about-badge-ic"><Icon name="medal" size={22} /></span><strong data-count>{s(st, 'aboutBadgeValue')}</strong><span>{s(st, 'aboutBadgeLabel')}</span></div>
           )}

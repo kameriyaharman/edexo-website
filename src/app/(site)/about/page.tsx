@@ -5,9 +5,11 @@ import { getPage } from '@/lib/data';
 import { renderMarkdown } from '@/lib/markdown';
 import { mediaUrl } from '@/lib/format';
 
+import { pageMeta } from '@/lib/seo';
+
 export async function generateMetadata(): Promise<Metadata> {
   const p = await getPage('about');
-  return { title: p?.seoTitle || p?.title || 'About Us', description: p?.seoDescription || p?.subtitle || undefined };
+  return pageMeta({ title: p?.seoTitle || p?.title || 'About Us', description: p?.seoDescription || p?.subtitle, path: '/about', imageId: p?.imageId });
 }
 
 export default async function AboutPage() {

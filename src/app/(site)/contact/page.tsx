@@ -6,7 +6,16 @@ import { getSettings, s } from '@/lib/settings';
 import { telHref } from '@/lib/format';
 import { Icon } from '@/components/Icon';
 
-export const metadata: Metadata = { title: 'Contact Us', description: 'Visit Edexo in Rohini or Dwarka, Delhi, or send us a message to book a free demo class.' };
+import { pageMeta } from '@/lib/seo';
+
+export async function generateMetadata(): Promise<Metadata> {
+  const st = await getSettings();
+  return pageMeta({
+    title: s(st, 'contactSeoTitle', 'Contact Edexo — Rohini & Dwarka, Delhi'),
+    description: s(st, 'contactSeoDescription', 'Visit Edexo in Rohini or Dwarka, Delhi, call us, or send a message to book a free German demo class.'),
+    path: '/contact',
+  });
+}
 
 export default async function ContactPage() {
   const [st, branches, courses] = await Promise.all([getSettings(), getBranches(), getCourses()]);

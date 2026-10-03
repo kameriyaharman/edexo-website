@@ -17,7 +17,7 @@ export function TestimonialSlider({ items }: { items: T[] }) {
   return (
     <div className="testimonial" aria-roledescription="carousel" aria-label="Student reviews">
       <span className="t-quote" aria-hidden="true"><Icon name="quote" size={34} /></span>
-      {t.photo ? <img src={t.photo} alt="" /> : <span className="avatar" />}
+      {t.photo ? <img src={t.photo} alt={t.name} loading="lazy" /> : <span className="avatar" />}
       <div className="body" aria-live="polite">
         <blockquote>“{t.quote}”</blockquote>
         <div className="stars" aria-label={`${t.rating} out of 5 stars`}>

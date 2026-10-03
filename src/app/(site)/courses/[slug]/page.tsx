@@ -8,39 +8,49 @@ import { Icon, iconFor } from '@/components/Icon';
 import { getCourse, getCourses } from '@/lib/data';
 import { inr, mediaUrl, splitLines } from '@/lib/format';
 import { renderMarkdown } from '@/lib/markdown';
+import { abs, findRedirect, pageMeta, siteUrl } from '@/lib/seo';
+import { JsonLd } from '@/components/site/StructuredData';
+import { permanentRedirect, redirect } from 'next/navigation';
 
 type Props = { params: Promise<{ slug: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const c = await getCourse((await params).slug);
   if (!c) return {};
-  const img = mediaUrl(c.imageId);
-  return {
-    title: c.seoTitle || c.title,
-    description: c.seoDescription || c.shortDesc || undefined,
-    openGraph: img ? { images: [img] } : undefined,
-  };
+  return pageMeta({
+    title: c.seoTitle || `${c.title} Course in Delhi${c.duration ? ` — ${c.duration}` : ''}`,
+    description: c.seoDescription || `${c.shortDesc ?? ''} ${c.title} at Edexo Rohini & Dwarka, online or offline. Free demo class.`.trim(),
+    path: `/courses/${c.slug}`, imageId: c.imageId,
+  });
 }
 
 export default async function CoursePage({ params }: Props) {
-  const c = await getCourse((await params).slug);
-  if (!c) notFound();
+  const slug = (await params).slug;
+  const c = await getCourse(slug);
+  if (!c) {
+    const r = await findRedirect(`/courses/${slug}`);
+    if (r) (r.permanent ? permanentRedirect : redirect)(r.to);
+    notFound();
+  }
   const img = mediaUrl(c.imageId);
   const related = (await getCourses()).filter((x) => x.languageId === c.languageId && x.id !== c.id).slice(0, 3);
   const jsonLd = {
-    '@context': 'https://schema.org', '@type': 'Course', name: c.title, description: c.shortDesc,
-    provider: { '@type': 'EducationalOrganization', name: 'Edexo' },
-    ...(c.price ? { offers: { '@type': 'Offer', price: c.price, priceCurrency: 'INR', category: 'Paid' } } : {}),
+    '@context': 'https://schema.org', '@type': 'Course', name: c.title, description: c.shortDesc || c.title,
+    url: abs(`/courses/${c.slug}`), ...(img ? { image: abs(img) } : {}),
+    inLanguage: 'en-IN', ...(c.level ? { educationalLevel: c.level } : {}),
+    provider: { '@type': 'EducationalOrganization', '@id': `${siteUrl()}/#organization`, name: 'Edexo', sameAs: siteUrl() + '/' },
+    ...(c.price ? { offers: { '@type': 'Offer', price: c.price, priceCurrency: 'INR', category: 'Paid', availability: 'https://schema.org/InStock', url: abs(`/courses/${c.slug}`) } } : {}),
+    hasCourseInstance: [{ '@type': 'CourseInstance', courseMode: ['Online', 'Onsite'], location: 'Rohini & Dwarka, New Delhi', ...(c.duration ? { courseWorkload: c.duration } : {}) }],
   };
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <JsonLd data={jsonLd} />
       <PageHero title={c.title} subtitle={c.shortDesc}
         crumbs={[{ label: 'Home', href: '/' }, { label: 'Courses', href: '/courses' }, ...(c.languageName ? [{ label: c.languageName, href: `/courses?language=${c.languageSlug}` }] : []), { label: c.title }]} />
       <section className="section">
         <div className="wrap course-layout">
           <div>
-            {img && <img className="course-cover" src={img} alt={`${c.title} class`} />}
+            {img && <img className="course-cover" src={img} alt={`${c.title} course at Edexo`} />}
             <div className="prose" dangerouslySetInnerHTML={{ __html: renderMarkdown(c.description) }} />
           </div>
           <aside className="card course-aside">

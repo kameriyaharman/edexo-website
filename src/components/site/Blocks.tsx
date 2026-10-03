@@ -1,12 +1,13 @@
 import Link from 'next/link';
 import { formatDate, mediaUrl, splitLines, telHref } from '@/lib/format';
 import { Icon } from '@/components/Icon';
+import { BreadcrumbLd } from './StructuredData';
 
 export function PostCard({ p }: { p: { slug: string; title: string; excerpt: string | null; coverId: number | null; publishedAt: Date | null } }) {
   const img = mediaUrl(p.coverId);
   return (
     <Link href={`/blog/${p.slug}`} className="post-card">
-      {img ? <img src={img} alt="" loading="lazy" /> : <div className="noimg" />}
+      {img ? <img src={img} alt={p.title} loading="lazy" /> : <div className="noimg" />}
       <div className="date"><Icon name="calendar" size={14} />{formatDate(p.publishedAt)}</div>
       <h3>{p.title}</h3>
       {p.excerpt && <p>{p.excerpt}</p>}
@@ -33,6 +34,7 @@ export function BranchCard({ b }: { b: { name: string; address: string; landmark
 export function PageHero({ title, subtitle, crumbs }: { title: string; subtitle?: string | null; crumbs?: { label: string; href?: string }[] }) {
   return (
     <section className="page-hero">
+      {crumbs && <BreadcrumbLd crumbs={crumbs} />}
       <div className="wrap">
         {crumbs && (
           <nav className="crumbs" aria-label="Breadcrumb">

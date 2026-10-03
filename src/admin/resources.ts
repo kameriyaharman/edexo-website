@@ -192,6 +192,19 @@ export const resources: Resource[] = [
   },
 ];
 
+resources.push({
+  key: 'redirects', label: 'Redirects', singular: 'redirect', table: schema.redirects, orderBy: 'sort',
+  description: 'Send old or changed URLs to the right page (301), so Google rankings and old links keep working.',
+  columns: ['fromPath', 'toPath', 'hits', 'active'],
+  fields: [
+    { name: 'fromPath', label: 'Old URL path', type: 'text', required: true, placeholder: '/course/german-language-course-a1-level', help: 'Only the part after the domain, starting with /' },
+    { name: 'toPath', label: 'Send visitors to', type: 'text', required: true, placeholder: '/courses/german-a1', help: 'A path on this site (/courses) or a full https:// address' },
+    { name: 'permanent', label: 'Permanent (301) — recommended for SEO', type: 'boolean' },
+    { name: 'active', label: 'Active', type: 'boolean' },
+    { name: 'sort', label: 'Order', type: 'number' },
+  ],
+});
+
 export function getResource(key: string) {
   return resources.find((r) => r.key === key) ?? null;
 }

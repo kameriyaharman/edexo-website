@@ -5,7 +5,16 @@ import { EnquiryBand } from '@/components/site/Sections';
 import { getCourses, getLanguages } from '@/lib/data';
 import { getSettings, s } from '@/lib/settings';
 
-export const metadata: Metadata = { title: 'Courses', description: 'German A1 to C2, French, Italian and Japanese courses in Delhi — online and offline.' };
+import { pageMeta } from '@/lib/seo';
+
+export async function generateMetadata(): Promise<Metadata> {
+  const st = await getSettings();
+  return pageMeta({
+    title: s(st, 'coursesSeoTitle', 'German, French, Italian & Japanese Courses in Delhi'),
+    description: s(st, 'coursesSeoDescription', 'German A1 to C2, French, Italian and Japanese courses at Edexo Rohini and Dwarka, Delhi — online and offline batches with a free demo class.'),
+    path: '/courses',
+  });
+}
 
 export default async function CoursesPage({ searchParams }: { searchParams: Promise<{ language?: string }> }) {
   const { language } = await searchParams;

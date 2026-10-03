@@ -193,3 +193,15 @@ export const adminUsers = pgTable('admin_users', {
   passwordHash: text('password_hash').notNull(),
   ...timestamps,
 });
+
+/** 301/302 redirects, e.g. old edexo.in URLs → new pages. */
+export const redirects = pgTable('redirects', {
+  id: serial('id').primaryKey(),
+  fromPath: text('from_path').notNull().unique(),
+  toPath: text('to_path').notNull(),
+  permanent: boolean('permanent').notNull().default(true),
+  hits: integer('hits').notNull().default(0),
+  active: boolean('active').notNull().default(true),
+  sort: integer('sort').notNull().default(0),
+  ...timestamps,
+});
