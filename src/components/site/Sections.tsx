@@ -17,6 +17,7 @@ export async function Hero() {
   const right = lines(st, 'heroBadgesRight');
   return (
     <section className="hero">
+      <div className="hero-deco" aria-hidden="true"><span className="blob b1" /><span className="blob b2" /><span className="dots" /></div>
       <div className="wrap">
         <div className="hero-copy">
           {s(st, 'heroEyebrow') && <div className="pill">{s(st, 'heroEyebrow')}</div>}
@@ -35,15 +36,15 @@ export async function Hero() {
           <div className="circle" />
           {img && <img className="photo" src={img} alt="" fetchPriority="high" />}
           {left.length > 0 && (
-            <div className="float-card c1">{left.map((l) => <div className="row" key={l}><Icon name="check" size={16} stroke={3} color="#1B2A6B" />{l}</div>)}</div>
+            <div className="float-card c1">{left.map((l) => <div className="row" key={l}><Icon name="check" size={16} stroke={3} color="#1A2E8C" />{l}</div>)}</div>
           )}
           {right.length > 0 && (
-            <div className="float-card c2">{right.map((l) => <div className="row" key={l}><Icon name="check" size={16} stroke={3} color="#1F8A57" />{l}</div>)}</div>
+            <div className="float-card c2">{right.map((l) => <div className="row" key={l}><Icon name="check" size={16} stroke={3} color="#12A15E" />{l}</div>)}</div>
           )}
           {s(st, 'heroStatValue') && (
             <div className="float-card c3">
               <IconBubble icon="user" tone="blue" size={48} />
-              <div><strong>{s(st, 'heroStatValue')}</strong>{s(st, 'heroStatLabel')}</div>
+              <div><strong data-count>{s(st, 'heroStatValue')}</strong>{s(st, 'heroStatLabel')}</div>
             </div>
           )}
         </div>
@@ -92,7 +93,7 @@ export async function AboutSection() {
           <div className="ring" />
           {img && <img src={img} alt="" loading="lazy" />}
           {s(st, 'aboutBadgeValue') && (
-            <div className="card about-badge"><strong>{s(st, 'aboutBadgeValue')}</strong><span>{s(st, 'aboutBadgeLabel')}</span></div>
+            <div className="card about-badge"><strong data-count>{s(st, 'aboutBadgeValue')}</strong><span>{s(st, 'aboutBadgeLabel')}</span></div>
           )}
         </div>
         <div className="about-copy">
@@ -185,7 +186,7 @@ export async function TestimonialsSection({ showTestimonials = true, showStats =
             {stats.map((x) => (
               <div className="stat" key={x.id}>
                 <IconBubble icon={x.icon} tone={x.tone} size={56} />
-                <div><strong>{x.value}</strong><span className="l">{x.label}</span></div>
+                <div><strong data-count>{x.value}</strong><span className="l">{x.label}</span></div>
               </div>
             ))}
           </div>

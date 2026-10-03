@@ -108,7 +108,7 @@ async function seedContent() {
       branchesTitle: 'Visit Our Centres',
       footerAbout: 'A German language institute in Delhi offering online and offline courses from A1 to C2, with exam preparation.',
       footerUsefulTitle: 'Useful Links', footerCoursesTitle: 'Courses',
-      newsletterTitle: 'Stay Connected', newsletterText: 'Leave your phone number and we will call you back.',
+      footerLocationsTitle: 'Our Centres',
       copyright: 'Copyright © {year} Edexo. All Rights Reserved.',
       showFeatures: true, showLevels: true, showTestimonials: true, showStats: true, showBlog: true, showBranches: true,
       showWhatsappButton: true,

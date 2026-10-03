@@ -1,24 +1,11 @@
 import type { Metadata, Viewport } from 'next';
-import localFont from 'next/font/local';
 import { getSettings, s, imageId } from '@/lib/settings';
 import { mediaUrl } from '@/lib/format';
 import './globals.css';
 
 export const dynamic = 'force-dynamic';
 
-const sans = localFont({
-  src: [
-    { path: '../fonts/pjs-400.woff2', weight: '400' },
-    { path: '../fonts/pjs-500.woff2', weight: '500' },
-    { path: '../fonts/pjs-600.woff2', weight: '600' },
-    { path: '../fonts/pjs-700.woff2', weight: '700' },
-    { path: '../fonts/pjs-800.woff2', weight: '800' },
-  ],
-  variable: '--font-sans',
-  display: 'swap',
-});
-
-export const viewport: Viewport = { themeColor: '#0B1640', width: 'device-width', initialScale: 1 };
+export const viewport: Viewport = { themeColor: '#0A1652', width: 'device-width', initialScale: 1 };
 
 export async function generateMetadata(): Promise<Metadata> {
   const st = await getSettings();
@@ -37,7 +24,11 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={sans.variable}>
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        {/* lets CSS know JS is on, so scroll-reveal effects never hide content when JS is off */}
+        <script dangerouslySetInnerHTML={{ __html: "document.documentElement.classList.add('js')" }} />
+      </head>
       <body>{children}</body>
     </html>
   );

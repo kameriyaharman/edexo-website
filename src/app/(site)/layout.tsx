@@ -2,6 +2,7 @@ import Script from 'next/script';
 import { Header } from '@/components/site/Header';
 import { Footer } from '@/components/site/Footer';
 import { Icon } from '@/components/Icon';
+import { Effects } from '@/components/site/Effects';
 import { getSettings, s, on } from '@/lib/settings';
 
 export default async function SiteLayout({ children }: { children: React.ReactNode }) {
@@ -16,6 +17,7 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
       <Header />
       <main id="main">{children}</main>
       <Footer />
+      <Effects />
       {wa && on(st, 'showWhatsappButton') && (
         <a className="wa-float" href={`https://wa.me/${wa}`} target="_blank" rel="noopener noreferrer" aria-label="Chat on WhatsApp">
           <Icon name="chat" size={26} />

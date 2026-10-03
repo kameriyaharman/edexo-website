@@ -1,4 +1,5 @@
 import { getSettings, on } from '@/lib/settings';
+import { Ticker } from '@/components/site/Ticker';
 import {
   AboutSection, BlogSection, BranchesSection, CoursesSection, EnquiryBand, FeaturesStrip, Hero, LevelsSection, TestimonialsSection,
 } from '@/components/site/Sections';
@@ -8,6 +9,7 @@ export default async function HomePage() {
   return (
     <>
       <Hero />
+      <Ticker />
       {on(st, 'showFeatures') && <FeaturesStrip />}
       <CoursesSection />
       <AboutSection />

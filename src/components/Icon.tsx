@@ -37,11 +37,11 @@ export function Icon({ name, size = 20, stroke = 2, className, color = 'currentC
 }
 
 export const tones: Record<string, { bg: string; fg: string }> = {
-  orange: { bg: '#FFEBDD', fg: '#C24E17' },
-  navy: { bg: '#E6E9F5', fg: '#1B2A6B' },
-  green: { bg: '#E2F6EC', fg: '#1F8A57' },
-  amber: { bg: '#FFF1DE', fg: '#B8680E' },
-  blue: { bg: '#E3F4FD', fg: '#1C7DB4' },
+  orange: { bg: '#FFE6D5', fg: '#E8540A' },
+  navy: { bg: '#E3E8FB', fg: '#1A2E8C' },
+  green: { bg: '#DDF7EA', fg: '#12A15E' },
+  amber: { bg: '#FFF0D6', fg: '#E08A00' },
+  blue: { bg: '#DDF1FE', fg: '#0B8AD6' },
 };
 
 export function IconBubble({ icon, tone = 'orange', size = 52, iconSize = 22 }: {
