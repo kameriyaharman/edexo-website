@@ -520,3 +520,9 @@ html.cursor-text .cursor-dot, html.cursor-text .cursor-ring, html.cursor-hidden 
 @media (max-width: 860px) {
   .footer-grid { padding-top: 56px; padding-bottom: 40px; gap: 32px; }
 }
+
+.footer-bottom { display: flex; justify-content: center; align-items: center; gap: 6px 14px; flex-wrap: wrap; }
+.footer-bottom .credit::before { content: '·'; margin-right: 14px; color: #5B65A0; }
+.footer-bottom .credit a { color: #fff; font-weight: 700; font-size: 13px; background: linear-gradient(90deg, #FF9248, #FF6A1A); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.footer-bottom .credit a:hover { text-decoration: underline; text-decoration-color: #FF6A1A; }
+@media (max-width: 520px) { .footer-bottom { flex-direction: column; padding-bottom: 92px !important; } .footer-bottom .credit::before { display: none; } }

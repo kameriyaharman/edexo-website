@@ -49,7 +49,20 @@ export async function Footer() {
           })}
         </div>
       </div>
-      <div className="wrap footer-bottom">{s(st, 'copyright').replace('{year}', String(new Date().getFullYear()))}</div>
+      <div className="wrap footer-bottom">
+        <span>{s(st, 'copyright').replace('{year}', String(new Date().getFullYear()))}</span>
+        {(st.creditText === undefined || s(st, 'creditText')) && (
+          <span className="credit">
+            {(() => {
+              const text = st.creditText === undefined ? 'Developed by Custom E Solution' : s(st, 'creditText');
+              const url = st.creditUrl === undefined ? 'http://customesolution.com/' : s(st, 'creditUrl');
+              const m = text.match(/^(.*?\bby\s+)(.+)$/i);
+              const label = m ? m[2] : text;
+              return <>{m ? m[1] : ''}{url ? <a href={url} target="_blank" rel="noopener">{label}</a> : label}</>;
+            })()}
+          </span>
+        )}
+      </div>
     </footer>
   );
 }

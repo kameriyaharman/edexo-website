@@ -124,6 +124,8 @@ export const settingsGroups: SettingsGroup[] = [
       { name: 'footerCoursesTitle', label: 'Column 2 heading', type: 'text' },
       { name: 'footerLocationsTitle', label: 'Column 3 heading (centres / locations)', type: 'text', help: 'The centres themselves are edited under Content → Centres.' },
       { name: 'copyright', label: 'Copyright line ({year} = current year)', type: 'text' },
+      { name: 'creditText', label: 'Developer credit text', type: 'text', placeholder: 'Developed by Custom E Solution', help: 'Shown next to the copyright line. Leave empty to hide.' },
+      { name: 'creditUrl', label: 'Developer credit link', type: 'url', placeholder: 'http://customesolution.com/' },
     ],
   },
   {

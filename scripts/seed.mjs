@@ -110,6 +110,7 @@ async function seedContent() {
       footerUsefulTitle: 'Useful Links', footerCoursesTitle: 'Courses',
       footerLocationsTitle: 'Our Centres',
       copyright: 'Copyright © {year} Edexo. All Rights Reserved.',
+      creditText: 'Developed by Custom E Solution', creditUrl: 'http://customesolution.com/',
       showFeatures: true, showLevels: true, showTestimonials: true, showStats: true, showBlog: true, showBranches: true,
       showWhatsappButton: true,
       seoTitle: 'Edexo — Best German Language Institute in Delhi | A1 to C2',
