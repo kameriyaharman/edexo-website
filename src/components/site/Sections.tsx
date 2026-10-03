@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Icon, IconBubble } from '@/components/Icon';
+import { Icon, IconBubble, iconFor } from '@/components/Icon';
 import { getSettings, s, lines, imageId } from '@/lib/settings';
 import {
   getBranches, getCourses, getFeatures, getLanguages, getLevels, getPosts, getReasons, getStats, getTestimonials,
@@ -20,11 +20,11 @@ export async function Hero() {
       <div className="hero-deco" aria-hidden="true"><span className="blob b1" /><span className="blob b2" /><span className="dots" /></div>
       <div className="wrap">
         <div className="hero-copy">
-          {s(st, 'heroEyebrow') && <div className="pill">{s(st, 'heroEyebrow')}</div>}
+          {s(st, 'heroEyebrow') && <div className="pill"><Icon name="languages" size={16} />{s(st, 'heroEyebrow')}</div>}
           <h1>{s(st, 'heroTitle')} {s(st, 'heroHighlight') && <span className="hl">{s(st, 'heroHighlight')}</span>}</h1>
           <p>{s(st, 'heroText')}</p>
           <div className="hero-ctas">
-            {s(st, 'heroPrimaryLabel') && <Link className="btn btn-orange" href={s(st, 'heroPrimaryHref', '/#enroll')}>{s(st, 'heroPrimaryLabel')}</Link>}
+            {s(st, 'heroPrimaryLabel') && <Link className="btn btn-orange btn-lg" href={s(st, 'heroPrimaryHref', '/#enroll')}><Icon name="video" size={19} />{s(st, 'heroPrimaryLabel')}</Link>}
             {s(st, 'heroSecondaryLabel') && (
               <Link className="play-link" href={s(st, 'heroSecondaryHref', '/courses')}>
                 <span><Icon name="arrowRight" size={18} stroke={2.4} /></span>{s(st, 'heroSecondaryLabel')}
@@ -72,7 +72,7 @@ export async function CoursesSection({ initial }: { initial?: string }) {
       <div className="wrap">
         <div className="split-head">
           <div>
-            <span className="eyebrow">{s(st, 'coursesEyebrow')}</span>
+            <span className="eyebrow"><Icon name="sparkles" size={15} />{s(st, 'coursesEyebrow')}</span>
             <h2 className="h2">{s(st, 'coursesTitle')}</h2>
           </div>
           <p>{s(st, 'coursesText')}</p>
@@ -93,11 +93,11 @@ export async function AboutSection() {
           <div className="ring" />
           {img && <img src={img} alt="" loading="lazy" />}
           {s(st, 'aboutBadgeValue') && (
-            <div className="card about-badge"><strong data-count>{s(st, 'aboutBadgeValue')}</strong><span>{s(st, 'aboutBadgeLabel')}</span></div>
+            <div className="card about-badge"><span className="about-badge-ic"><Icon name="medal" size={22} /></span><strong data-count>{s(st, 'aboutBadgeValue')}</strong><span>{s(st, 'aboutBadgeLabel')}</span></div>
           )}
         </div>
         <div className="about-copy">
-          <span className="eyebrow">{s(st, 'aboutEyebrow')}</span>
+          <span className="eyebrow"><Icon name="sparkles" size={15} />{s(st, 'aboutEyebrow')}</span>
           <h2 className="h2">{s(st, 'aboutTitle')}</h2>
           <p>{s(st, 'aboutText')}</p>
           <div className="reasons">
@@ -121,17 +121,18 @@ export async function LevelsSection() {
     <section className="section">
       <div className="wrap">
         <div className="section-head">
-          <span className="eyebrow">{s(st, 'levelsEyebrow')}</span>
+          <span className="eyebrow"><Icon name="sparkles" size={15} />{s(st, 'levelsEyebrow')}</span>
           <h2 className="h2">{s(st, 'levelsTitle')}</h2>
           {s(st, 'levelsText') && <p>{s(st, 'levelsText')}</p>}
         </div>
         <div className="levels">
-          {levels.map((l) => (
+          {levels.map((l, i) => (
             <div className={`card level${l.featured ? ' featured' : ''}`} key={l.id}>
+              <span className="level-ic"><Icon name={['book', 'layers', 'rocket', 'trophy', 'award', 'star'][i % 6]} size={26} /></span>
               <div className="code">{l.code}</div>
               <h3>{l.title}</h3>
               <p>{l.description}</p>
-              {l.link && <Link className={`btn btn-sm ${l.featured ? 'btn-white' : 'btn-navy'}`} href={l.link}>{l.buttonLabel || 'View Course'}</Link>}
+              {l.link && <Link className={`btn btn-sm ${l.featured ? 'btn-orange' : 'btn-navy'}`} href={l.link}>{l.buttonLabel || 'View Course'}<Icon name="arrowRight" size={15} /></Link>}
             </div>
           ))}
         </div>
@@ -149,7 +150,7 @@ export async function EnquiryBand({ defaultCourse }: { defaultCourse?: string })
           <h2 className="h2">{s(st, 'enquiryTitle')}</h2>
           <p>{s(st, 'enquiryText')}</p>
           <ul className="ticks">
-            {lines(st, 'enquiryPoints').map((p) => <li key={p}><Icon name="check" size={18} stroke={3} />{p}</li>)}
+            {lines(st, 'enquiryPoints').map((p) => <li key={p}><span className="tick-ic"><Icon name={iconFor(p)} size={18} /></span>{p}</li>)}
           </ul>
         </div>
         <EnquiryForm
@@ -175,7 +176,7 @@ export async function TestimonialsSection({ showTestimonials = true, showStats =
         {items.length > 0 && (
           <>
             <div className="section-head" style={{ marginBottom: 48 }}>
-              <span className="eyebrow">{s(st, 'testimonialsEyebrow')}</span>
+              <span className="eyebrow"><Icon name="sparkles" size={15} />{s(st, 'testimonialsEyebrow')}</span>
               <h2 className="h2">{s(st, 'testimonialsTitle')}</h2>
             </div>
             <TestimonialSlider items={items.map((t) => ({ id: t.id, name: t.name, role: t.role, quote: t.quote, rating: t.rating, photo: mediaUrl(t.photoId) }))} />
@@ -203,11 +204,11 @@ export async function BlogSection() {
     <section className="section" style={{ paddingTop: 72 }}>
       <div className="wrap">
         <div className="section-head" style={{ marginBottom: 48 }}>
-          <span className="eyebrow">{s(st, 'blogEyebrow')}</span>
+          <span className="eyebrow"><Icon name="sparkles" size={15} />{s(st, 'blogEyebrow')}</span>
           <h2 className="h2">{s(st, 'blogTitle')}</h2>
         </div>
         <div className="post-grid">{posts.map((p) => <PostCard key={p.id} p={p} />)}</div>
-        <p className="center" style={{ marginTop: 40 }}><Link className="btn btn-navy" href="/blog">View all articles</Link></p>
+        <p className="center" style={{ marginTop: 40 }}><Link className="btn btn-navy" href="/blog"><Icon name="news" size={18} />View all articles<Icon name="arrowRight" size={16} /></Link></p>
       </div>
     </section>
   );
@@ -219,7 +220,7 @@ export async function BranchesSection() {
   return (
     <section className="section bg-peach" id="contact" style={{ padding: '80px 0' }}>
       <div className="wrap">
-        <h2 className="h2 center" style={{ marginBottom: 36 }}>{s(st, 'branchesTitle')}</h2>
+        <div className="section-head" style={{ marginBottom: 40 }}><span className="eyebrow"><Icon name="pin" size={15} />Locations</span><h2 className="h2">{s(st, 'branchesTitle')}</h2></div>
         <div className="branch-grid">{branches.map((b) => <BranchCard key={b.id} b={b} />)}</div>
       </div>
     </section>

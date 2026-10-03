@@ -1,39 +1,52 @@
-const paths: Record<string, React.ReactNode> = {
-  laptop: (<><rect x="3" y="4" width="18" height="12" rx="2" /><path d="M2 20h20" /></>),
-  book: (<path d="M4 5h6a2 2 0 0 1 2 2v13a2 2 0 0 0-2-2H4zM20 5h-6a2 2 0 0 0-2 2v13a2 2 0 0 1 2-2h6z" />),
-  award: (<><circle cx="12" cy="9" r="6" /><path d="M8.5 14L7 22l5-3 5 3-1.5-8" /></>),
-  pin: (<><path d="M12 21s-7-5.5-7-11a7 7 0 0 1 14 0c0 5.5-7 11-7 11z" /><circle cx="12" cy="10" r="2.5" /></>),
-  briefcase: (<><rect x="3" y="7" width="18" height="13" rx="2" /><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></>),
-  cap: (<><path d="M2 9l10-5 10 5-10 5z" /><path d="M6 11v5c3 2 9 2 12 0v-5" /></>),
-  plane: (<path d="M2 16l20-8-6 12-3-5z" />),
-  globe: (<><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18" /></>),
-  users: (<><circle cx="9" cy="8" r="3.5" /><path d="M2.5 20c0-3.5 3-5.5 6.5-5.5s6.5 2 6.5 5.5" /><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14.8c2 .7 3.5 2.4 3.5 5.2" /></>),
-  user: (<><circle cx="12" cy="8" r="4" /><path d="M4 21c0-4 4-6 8-6s8 2 8 6" /></>),
-  clock: (<><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></>),
-  check: (<path d="M5 12l5 5L20 7" />),
-  arrowRight: (<path d="M5 12h14M13 6l6 6-6 6" />),
-  chevronLeft: (<path d="M15 6l-6 6 6 6" />),
-  chevronRight: (<path d="M9 6l6 6-6 6" />),
-  phone: (<path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.5c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z" />),
-  mail: (<><rect x="3" y="5" width="18" height="14" rx="2" /><path d="M3 7l9 6 9-6" /></>),
-  menu: (<path d="M4 7h16M4 12h16M4 17h16" />),
-  close: (<path d="M6 6l12 12M18 6L6 18" />),
-  star: (<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z" />),
-  calendar: (<><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M3 10h18M8 3v4M16 3v4" /></>),
-  chat: (<path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z" />),
+import {
+  Laptop, BookOpen, Award, MapPin, Briefcase, GraduationCap, Plane, Globe, Users, User, Clock, Check, ArrowRight,
+  ChevronLeft, ChevronRight, Phone, Mail, Menu, X, Star, Calendar, MessageCircle, Languages, Trophy, Target,
+  Sparkles, Heart, Lightbulb, Video, Headphones, FileCheck, BadgeCheck, School, Library, PenTool, Mic, Clock3,
+  Rocket, ShieldCheck, Wallet, Gift, Quote, Send, Navigation, Building2, CircleCheck, ChevronDown, Search,
+  Home, Info, Newspaper, Contact, Layers, Zap, BookMarked, NotebookPen, Medal, Smile, ThumbsUp, Monitor,
+  type LucideIcon,
+} from 'lucide-react';
+
+/** Icon names available to the site and to the admin "Icon" pickers. */
+const lucide: Record<string, LucideIcon> = {
+  laptop: Laptop, monitor: Monitor, book: BookOpen, bookmark: BookMarked, notebook: NotebookPen, library: Library,
+  award: Award, medal: Medal, trophy: Trophy, badge: BadgeCheck, certificate: FileCheck,
+  cap: GraduationCap, school: School, languages: Languages, globe: Globe, plane: Plane, briefcase: Briefcase,
+  pin: MapPin, navigation: Navigation, building: Building2,
+  users: Users, user: User, smile: Smile, heart: Heart, thumbsUp: ThumbsUp,
+  clock: Clock, clock3: Clock3, calendar: Calendar,
+  target: Target, sparkles: Sparkles, lightbulb: Lightbulb, rocket: Rocket, zap: Zap, layers: Layers,
+  video: Video, headphones: Headphones, mic: Mic, pen: PenTool,
+  shield: ShieldCheck, wallet: Wallet, gift: Gift,
+  check: Check, checkCircle: CircleCheck, arrowRight: ArrowRight, chevronLeft: ChevronLeft, chevronRight: ChevronRight,
+  chevronDown: ChevronDown, phone: Phone, mail: Mail, menu: Menu, close: X, star: Star, chat: MessageCircle,
+  quote: Quote, send: Send, search: Search, home: Home, info: Info, news: Newspaper, contact: Contact,
 };
 
-export const iconNames = Object.keys(paths);
+/* Brand marks drawn as simple glyphs (lucide no longer ships brand icons). */
+const brands: Record<string, React.ReactNode> = {
+  facebook: <path d="M14 8.5h2.5V5H14a4 4 0 0 0-4 4v2H8v3.5h2V21h3.5v-6.5H16l.5-3.5h-3V9.2c0-.4.3-.7.7-.7z" fill="currentColor" stroke="none" />,
+  instagram: (<><rect x="3" y="3" width="18" height="18" rx="5" /><circle cx="12" cy="12" r="4" /><circle cx="17.3" cy="6.7" r="1.1" fill="currentColor" stroke="none" /></>),
+  linkedin: (<><rect x="3" y="3" width="18" height="18" rx="3" /><path d="M7.5 10v7M7.5 7v.01M11 17v-4a2.5 2.5 0 0 1 5 0v4M11 10v7" /></>),
+  youtube: (<><rect x="2.5" y="5.5" width="19" height="13" rx="4" /><path d="M10.5 9.5v5l4.3-2.5z" fill="currentColor" /></>),
+  whatsapp: (<><path d="M4 20l1.3-4A8 8 0 1 1 8.4 19z" /><path d="M9.2 8.6c.2-.4.5-.4.8-.4h.4c.2 0 .4 0 .5.4l.6 1.5c.1.2 0 .4-.1.5l-.5.6c.6 1.1 1.4 1.9 2.5 2.5l.6-.5c.2-.1.4-.2.5-.1l1.5.6c.3.1.4.3.4.5v.4c0 .3 0 .6-.4.8-.5.3-1.3.5-2.2.2-2-.7-3.6-2.3-4.3-4.3-.3-.9-.1-1.7.2-2.2z" fill="currentColor" stroke="none" /></>),
+};
+
+export const iconNames = Object.keys(lucide);
 
 export function Icon({ name, size = 20, stroke = 2, className, color = 'currentColor' }: {
   name: string; size?: number; stroke?: number; className?: string; color?: string;
 }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={stroke}
-      strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
-      {paths[name] ?? paths.check}
-    </svg>
-  );
+  if (brands[name]) {
+    return (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={stroke}
+        strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true" style={{ color }}>
+        {brands[name]}
+      </svg>
+    );
+  }
+  const C = lucide[name] ?? Check;
+  return <C size={size} strokeWidth={stroke} color={color} className={className} aria-hidden="true" />;
 }
 
 export const tones: Record<string, { bg: string; fg: string }> = {
@@ -53,4 +66,17 @@ export function IconBubble({ icon, tone = 'orange', size = 52, iconSize = 22 }: 
       <Icon name={icon} size={iconSize} />
     </span>
   );
+}
+
+/** Pick a sensible icon for a free-text label (menu items, highlights, ticks). */
+export function iconFor(label: string): string {
+  const l = label.toLowerCase();
+  const rules: [RegExp, string][] = [
+    [/home/, 'home'], [/about/, 'info'], [/course|level|a1|b1|c1|c2/, 'cap'], [/german|french|italian|japanese|language/, 'languages'],
+    [/blog|article|news/, 'news'], [/contact|call/, 'phone'], [/privacy|terms|policy/, 'shield'],
+    [/demo/, 'video'], [/certif/, 'award'], [/trainer|teacher|expert/, 'users'], [/exam|test/, 'target'],
+    [/online|offline/, 'laptop'], [/material|book/, 'book'], [/batch|schedule|time/, 'calendar'], [/visa|abroad|germany|travel/, 'plane'],
+    [/job|career|work/, 'briefcase'], [/universit|study/, 'cap'], [/mumbai|pune|jaipur|delhi|rohini|dwarka|centre|center/, 'pin'],
+  ];
+  return rules.find(([r]) => r.test(l))?.[1] ?? 'checkCircle';
 }

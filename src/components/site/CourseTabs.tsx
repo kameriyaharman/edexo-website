@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { CourseCard, type CourseCardData } from './CourseCard';
+import { Icon } from '@/components/Icon';
 
 export function CourseTabs({ languages, courses, initial }: {
   languages: { slug: string; name: string }[];
@@ -26,7 +27,7 @@ export function CourseTabs({ languages, courses, initial }: {
           <button key={t.slug} id={`tab-${t.slug}`} role="tab" type="button" className="tab"
             aria-selected={t.slug === active} aria-controls="course-panel" tabIndex={t.slug === active ? 0 : -1}
             onClick={() => setActive(t.slug)} onKeyDown={(e) => onKey(e, i)}>
-            {t.name}
+            <Icon name="languages" size={17} />{t.name}
           </button>
         ))}
       </div>

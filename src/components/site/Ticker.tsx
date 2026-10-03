@@ -1,4 +1,5 @@
 import { getCourses, getFeatures } from '@/lib/data';
+import { Icon, iconFor } from '@/components/Icon';
 
 /** Moving strip under the hero: course names and highlights, scrolling endlessly. */
 export async function Ticker() {
@@ -8,7 +9,7 @@ export async function Ticker() {
   const row = (hidden: boolean) => (
     <div className="ticker-row" aria-hidden={hidden || undefined}>
       {items.map((t, i) => (
-        <span key={i} className="ticker-item">{t}<span className="ticker-star" aria-hidden="true">✦</span></span>
+        <span key={i} className="ticker-item"><Icon name={iconFor(t)} size={18} />{t}<span className="ticker-star" aria-hidden="true">✦</span></span>
       ))}
     </div>
   );

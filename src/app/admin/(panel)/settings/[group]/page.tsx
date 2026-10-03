@@ -2,6 +2,8 @@ import { notFound } from 'next/navigation';
 import { AdminForm } from '@/admin/Fields';
 import { saveSettings } from '@/admin/actions';
 import { getSettings, settingsGroups } from '@/lib/settings';
+import { Icon } from '@/components/Icon';
+import { iconForAdminPath } from '@/admin/nav';
 
 type Props = { params: Promise<{ group: string }> };
 
@@ -17,13 +19,12 @@ export default async function SettingsPage({ params }: Props) {
   const st = await getSettings();
   return (
     <>
-      <div className="a-top"><div><h1>{group.title}</h1>{group.description && <p>{group.description}</p>}</div>
-        <div className="a-top-actions"><a className="a-btn" href="/" target="_blank" rel="noopener noreferrer">View website ↗</a></div>
+      <div className="a-top">
+        <div><h1><span className="a-title-ic"><Icon name={iconForAdminPath(`/admin/settings/${group.key}`)} size={22} /></span>{group.title}</h1>{group.description && <p>{group.description}</p>}</div>
+        <div className="a-top-actions"><a className="a-btn" href="/" target="_blank" rel="noopener noreferrer"><Icon name="globe" size={15} />View website</a></div>
       </div>
-      <div className="a-card">
-        <AdminForm action={saveSettings} hidden={{ __group: group.key }}
-          fields={group.fields.map((f) => ({ ...f, value: st[f.name] }))} />
-      </div>
+      <AdminForm action={saveSettings} hidden={{ __group: group.key }} layout={group.fields.some((f) => f.type === 'image') ? 'split' : 'single'}
+        fields={group.fields.map((f) => ({ ...f, value: st[f.name] }))} />
     </>
   );
 }

@@ -5,8 +5,10 @@ import { db, schema } from '@/db';
 import { getResource } from '@/admin/resources';
 import { toggleActive } from '@/admin/actions';
 import { formatDate, inr } from '@/lib/format';
+import { Icon } from '@/components/Icon';
+import { iconForAdminPath } from '@/admin/nav';
 
-type Props = { params: Promise<{ resource: string }>; searchParams: Promise<{ deleted?: string; location?: string }> };
+type Props = { params: Promise<{ resource: string }>; searchParams: Promise<{ deleted?: string; location?: string; q?: string }> };
 
 export async function generateMetadata({ params }: Props) {
   return { title: getResource((await params).resource)?.label ?? 'Admin' };
@@ -20,6 +22,10 @@ export default async function ResourceList({ params, searchParams }: Props) {
   const order = res.orderBy === 'sort' ? [asc(t.sort), asc(t.id)] : res.orderBy === 'publishedAt' ? [desc(t.publishedAt), desc(t.id)] : [asc(t.id)];
   let rows: any[] = await db.select().from(t).orderBy(...order);
   if (res.key === 'menu' && sp.location) rows = rows.filter((r) => r.location === sp.location);
+  const total = rows.length;
+  const q = (sp.q ?? '').trim().toLowerCase();
+  if (q) rows = rows.filter((r) => res.fields.some((f) => ['text', 'textarea'].includes(f.type) && String(r[f.name] ?? '').toLowerCase().includes(q)));
+  const icon = iconForAdminPath(`/admin/${res.key}`);
   const langs = res.key === 'courses' ? Object.fromEntries((await db.select().from(schema.languages)).map((l) => [l.id, l.name])) : {};
   const labelOf = (name: string) => res.fields.find((f) => f.name === name)?.label.replace(/\s*\(.*\)$/, '') ?? name;
 
@@ -48,10 +54,15 @@ export default async function ResourceList({ params, searchParams }: Props) {
   return (
     <>
       <div className="a-top">
-        <div><h1>{res.label}</h1>{res.description && <p>{res.description}</p>}</div>
-        <div className="a-top-actions"><Link className="a-btn primary" href={`/admin/${res.key}/new`}>+ Add {res.singular}</Link></div>
+        <div><h1><span className="a-title-ic"><Icon name={icon} size={22} /></span>{res.label}</h1>{res.description && <p>{res.description}</p>}</div>
+        <div className="a-top-actions"><Link className="a-btn primary" href={`/admin/${res.key}/new`}><Icon name="sparkles" size={16} />Add {res.singular}</Link></div>
       </div>
-      {sp.deleted && <p className="a-msg ok" style={{ marginBottom: 16 }}>Deleted.</p>}
+      {sp.deleted && <p className="a-msg ok" style={{ marginBottom: 16 }}><Icon name="checkCircle" size={18} />Deleted.</p>}
+      <form className="a-toolbar">
+        {sp.location && <input type="hidden" name="location" value={sp.location} />}
+        <label className="a-search"><Icon name="search" size={17} /><input name="q" defaultValue={sp.q ?? ''} placeholder={`Search ${res.label.toLowerCase()}…`} aria-label={`Search ${res.label}`} /></label>
+        <span className="a-count-pill">{q ? `${rows.length} of ${total}` : `${total} ${total === 1 ? res.singular : res.label.toLowerCase()}`}</span>
+      </form>
       {res.key === 'menu' && (
         <div className="a-tabs">
           {[['', 'All'], ['header', 'Header'], ['footer_useful', 'Footer column 1'], ['footer_courses', 'Footer column 2']].map(([v, l]) => (
@@ -72,15 +83,23 @@ export default async function ResourceList({ params, searchParams }: Props) {
                     </td>
                   ))}
                   <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
-                    {res.viewUrl && <a className="a-btn sm" href={res.viewUrl(r) ?? '#'} target="_blank" rel="noopener noreferrer" style={{ marginRight: 6 }}>View</a>}
-                    <Link className="a-btn sm" href={`/admin/${res.key}/${r.id}`}>Edit</Link>
+                    <div className="a-row-actions">
+                      {res.viewUrl && <a className="a-btn sm" href={res.viewUrl(r) ?? '#'} target="_blank" rel="noopener noreferrer" aria-label="View on site"><Icon name="globe" size={14} />View</a>}
+                      <Link className="a-btn sm navy" href={`/admin/${res.key}/${r.id}`}><Icon name="pen" size={14} />Edit</Link>
+                    </div>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-      ) : <div className="a-card a-empty">Nothing here yet. <Link href={`/admin/${res.key}/new`}>Add the first {res.singular}</Link>.</div>}
+      ) : (
+        <div className="a-card a-empty">
+          <span className="a-empty-ic"><Icon name={q ? 'search' : icon} size={26} /></span>
+          {q ? <>Nothing matches “{sp.q}”.</> : <>Nothing here yet.</>}
+          <Link className="a-btn primary" href={`/admin/${res.key}/new`}><Icon name="sparkles" size={16} />Add {res.singular}</Link>
+        </div>
+      )}
     </>
   );
 }

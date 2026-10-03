@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation';
 import { PageHero } from '@/components/site/Blocks';
 import { CourseCard } from '@/components/site/CourseCard';
 import { EnquiryBand } from '@/components/site/Sections';
-import { Icon } from '@/components/Icon';
+import { Icon, iconFor } from '@/components/Icon';
 import { getCourse, getCourses } from '@/lib/data';
 import { inr, mediaUrl, splitLines } from '@/lib/format';
 import { renderMarkdown } from '@/lib/markdown';
@@ -51,9 +51,9 @@ export default async function CoursePage({ params }: Props) {
               {c.level && <li><Icon name="book" size={18} />Level: {c.level}</li>}
               {c.duration && <li><Icon name="clock" size={18} />Duration: {c.duration}</li>}
               {c.mode && <li><Icon name="laptop" size={18} />{c.mode}</li>}
-              {splitLines(c.highlights).map((h) => <li key={h}><Icon name="check" size={18} stroke={3} />{h}</li>)}
+              {splitLines(c.highlights).map((h) => <li key={h}><Icon name={iconFor(h)} size={18} />{h}</li>)}
             </ul>
-            <Link className="btn btn-orange" style={{ width: '100%' }} href="#enroll">Book a Free Demo</Link>
+            <Link className="btn btn-orange" style={{ width: '100%' }} href="#enroll"><Icon name="video" size={18} />Book a Free Demo</Link>
           </aside>
         </div>
       </section>

@@ -20,7 +20,7 @@ export function CourseCard({ c }: { c: CourseCardData }) {
         {c.languageCode && <span className="lang-badge">{c.languageCode}</span>}
       </div>
       {c.price !== null && (
-        <div className="price">
+        <div className="price"><span className="price-ic"><Icon name="wallet" size={16} /></span>
           <strong>{inr(c.price)}</strong>
           {c.mrp && c.mrp > c.price ? <s aria-label={`Original price ${inr(c.mrp)}`}>{inr(c.mrp)}</s> : null}
         </div>
@@ -32,8 +32,8 @@ export function CourseCard({ c }: { c: CourseCardData }) {
         {c.mode && <span><Icon name="laptop" size={16} />{c.mode}</span>}
       </div>
       <div className="card-foot">
-        <Link className="details" href={href}>View details</Link>
-        <Link className="btn btn-orange btn-sm" href={`${href}#enroll`}>Enroll Now</Link>
+        <Link className="details" href={href}>View details <Icon name="arrowRight" size={15} /></Link>
+        <Link className="btn btn-orange btn-sm" href={`${href}#enroll`}><Icon name="cap" size={16} />Enroll Now</Link>
       </div>
     </article>
   );

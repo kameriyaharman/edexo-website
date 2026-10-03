@@ -10,9 +10,9 @@ export async function Footer() {
   const logo = mediaUrl(imageId(st, 'logoWhiteId'));
   const wa = s(st, 'whatsapp').replace(/\D/g, '');
   const socials = [
-    ['Facebook', s(st, 'facebook')], ['Instagram', s(st, 'instagram')],
-    ['YouTube', s(st, 'youtube')], ['LinkedIn', s(st, 'linkedin')],
-    ['WhatsApp', wa ? `https://wa.me/${wa}` : ''],
+    ['Facebook', s(st, 'facebook'), 'facebook'], ['Instagram', s(st, 'instagram'), 'instagram'],
+    ['YouTube', s(st, 'youtube'), 'youtube'], ['LinkedIn', s(st, 'linkedin'), 'linkedin'],
+    ['WhatsApp', wa ? `https://wa.me/${wa}` : '', 'whatsapp'],
   ].filter(([, u]) => u);
   return (
     <footer className="footer">
@@ -21,15 +21,15 @@ export async function Footer() {
         <div>
           <Link href="/" className="logo">{logo ? <img src={logo} alt={s(st, 'siteName', 'Edexo')} /> : <strong style={{ color: '#fff', fontSize: 24 }}>{s(st, 'siteName')}</strong>}</Link>
           <p className="about">{s(st, 'footerAbout')}</p>
-          <div className="social">{socials.map(([n, u]) => <a key={n} href={u} target="_blank" rel="noopener noreferrer">{n}</a>)}</div>
+          <div className="social">{socials.map(([n, u, ic]) => <a key={n} href={u} target="_blank" rel="noopener noreferrer" aria-label={n} className="soc"><Icon name={ic} size={18} /></a>)}</div>
         </div>
         <div className="col">
           <h4>{s(st, 'footerUsefulTitle', 'Useful Links')}</h4>
-          {useful.map((m) => <Link key={m.id} href={m.href}>{m.label}</Link>)}
+          {useful.map((m) => <Link key={m.id} href={m.href}><Icon name="chevronRight" size={14} />{m.label}</Link>)}
         </div>
         <div className="col">
           <h4>{s(st, 'footerCoursesTitle', 'Courses')}</h4>
-          {courses.map((m) => <Link key={m.id} href={m.href}>{m.label}</Link>)}
+          {courses.map((m) => <Link key={m.id} href={m.href}><Icon name="chevronRight" size={14} />{m.label}</Link>)}
         </div>
         <div className="col">
           <h4>{s(st, 'footerLocationsTitle', 'Our Centres')}</h4>
@@ -42,7 +42,7 @@ export async function Footer() {
                 <div>
                   <strong>{b.name}</strong>
                   <a href={map} target="_blank" rel="noopener noreferrer" className="f-addr">{b.address}</a>
-                  {phone && <a href={telHref(phone)} className="f-phone">{phone}</a>}
+                  {phone && <a href={telHref(phone)} className="f-phone"><Icon name="phone" size={13} />{phone}</a>}
                 </div>
               </div>
             );

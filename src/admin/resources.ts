@@ -24,8 +24,8 @@ export interface Resource {
 }
 
 const seo: ResourceField[] = [
-  { name: 'seoTitle', label: 'SEO title (optional)', type: 'text' },
-  { name: 'seoDescription', label: 'SEO description (optional)', type: 'textarea' },
+  { name: 'seoTitle', label: 'SEO title', type: 'text', maxLength: 60, help: 'Shown in Google results. Leave empty to use the name.' },
+  { name: 'seoDescription', label: 'SEO description', type: 'textarea', maxLength: 160, help: 'One or two sentences for Google results.' },
 ];
 
 export const resources: Resource[] = [
@@ -39,8 +39,8 @@ export const resources: Resource[] = [
       { name: 'slug', label: 'URL slug', type: 'text', help: 'Leave empty to create it from the name. Used in /courses/your-slug' },
       { name: 'languageId', label: 'Language (tab)', type: 'select', optionsFrom: ['languages', 'name'] },
       { name: 'level', label: 'Level', type: 'text', placeholder: 'A1' },
-      { name: 'price', label: 'Price (₹)', type: 'number' },
-      { name: 'mrp', label: 'Original price / MRP (₹) — shown struck through', type: 'number' },
+      { name: 'price', label: 'Price', type: 'number', prefix: '₹', placeholder: '16499' },
+      { name: 'mrp', label: 'Original price (MRP)', type: 'number', prefix: '₹', help: 'Shown struck through next to the price. Leave empty to hide.' },
       { name: 'duration', label: 'Duration', type: 'text', placeholder: '2 months' },
       { name: 'mode', label: 'Mode', type: 'text', placeholder: 'Online / Offline' },
       { name: 'imageId', label: 'Course image (landscape)', type: 'image' },

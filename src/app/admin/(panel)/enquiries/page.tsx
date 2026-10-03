@@ -3,6 +3,7 @@ import { and, count, desc, eq, ilike, or } from 'drizzle-orm';
 import { db, schema } from '@/db';
 import { deleteEnquiry, updateEnquiry } from '@/admin/actions';
 import { ConfirmButton } from '@/admin/Fields';
+import { Icon } from '@/components/Icon';
 
 export const metadata = { title: 'Enquiries' };
 const STATUSES = ['new', 'contacted', 'enrolled', 'closed'] as const;
@@ -34,8 +35,8 @@ export default async function Enquiries({ searchParams }: { searchParams: Promis
   return (
     <>
       <div className="a-top">
-        <div><h1>Enquiries</h1><p>Leads from the free demo form, contact page and footer call-back box.</p></div>
-        <div className="a-top-actions"><a className="a-btn" href={`/admin/enquiries/export${qs({})}`}>Download CSV</a></div>
+        <div><h1><span className="a-title-ic"><Icon name="contact" size={22} /></span>Enquiries</h1><p>Leads from the free demo form and the contact page.</p></div>
+        <div className="a-top-actions"><a className="a-btn" href={`/admin/enquiries/export${qs({})}`}><Icon name="certificate" size={15} />Download CSV</a></div>
       </div>
       <div className="a-tabs">
         <Link href={`/admin/enquiries${q ? `?q=${encodeURIComponent(q)}` : ''}`} aria-current={!status ? 'page' : undefined}>All</Link>
@@ -45,22 +46,30 @@ export default async function Enquiries({ searchParams }: { searchParams: Promis
           </Link>
         ))}
       </div>
-      <form className="a-enq-row" style={{ marginBottom: 18 }}>
+      <form className="a-toolbar">
         {status && <input type="hidden" name="status" value={status} />}
-        <input className="a-input" style={{ maxWidth: 360 }} name="q" defaultValue={q} placeholder="Search name, phone, course…" aria-label="Search enquiries" />
-        <button className="a-btn" type="submit">Search</button>
+        <label className="a-search"><Icon name="search" size={17} /><input name="q" defaultValue={q} placeholder="Search name, phone, course…" aria-label="Search enquiries" /></label>
+        <span className="a-count-pill">{total} {total === 1 ? 'enquiry' : 'enquiries'}</span>
       </form>
-      {rows.length === 0 && <div className="a-card a-empty">No enquiries found.</div>}
+      {rows.length === 0 && <div className="a-card a-empty"><span className="a-empty-ic"><Icon name="contact" size={26} /></span>No enquiries found.</div>}
       {rows.map((r) => (
         <div className="a-card a-enq" key={r.id} style={{ marginBottom: 14 }}>
           <div className="who">
             <div className="a-enq-row" style={{ marginBottom: 6 }}>
               <strong>{r.name}</strong><span className={`pill-s st-${r.status}`}>{r.status}</span>
             </div>
-            <div><a href={`tel:${r.phone}`}>{r.phone}</a>{r.email && <> · <a href={`mailto:${r.email}`}>{r.email}</a></>} · <a href={`https://wa.me/${r.phone.replace(/\D/g, '').replace(/^(\d{10})$/, '91$1')}`} target="_blank" rel="noopener noreferrer">WhatsApp</a></div>
-            <div>{[r.course, r.branch].filter(Boolean).join(' · ')}</div>
-            {r.message && <p style={{ marginTop: 8, whiteSpace: 'pre-wrap', color: 'var(--a-text)' }}>{r.message}</p>}
-            <div style={{ marginTop: 6 }}>{r.source} · {r.createdAt.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'medium', timeStyle: 'short' })}</div>
+            <div className="meta-line">
+              <a href={`tel:${r.phone}`}><Icon name="phone" size={14} />{r.phone}</a>
+              <a href={`https://wa.me/${r.phone.replace(/\D/g, '').replace(/^(\d{10})$/, '91$1')}`} target="_blank" rel="noopener noreferrer"><Icon name="whatsapp" size={14} />WhatsApp</a>
+              {r.email && <a href={`mailto:${r.email}`}><Icon name="mail" size={14} />{r.email}</a>}
+            </div>
+            <div className="meta-line">
+              {r.course && <span><Icon name="cap" size={14} />{r.course}</span>}
+              {r.branch && <span><Icon name="pin" size={14} />{r.branch}</span>}
+              <span><Icon name="clock" size={14} />{r.createdAt.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'medium', timeStyle: 'short' })}</span>
+              {r.source && <span><Icon name="send" size={14} />{r.source}</span>}
+            </div>
+            {r.message && <p style={{ marginTop: 10, whiteSpace: 'pre-wrap', color: 'var(--a-text)', background: 'var(--a-soft)', padding: '10px 12px', borderRadius: 10 }}>{r.message}</p>}
           </div>
           <div>
             <form action={updateEnquiry}>
@@ -69,13 +78,13 @@ export default async function Enquiries({ searchParams }: { searchParams: Promis
                 <select className="a-input" style={{ width: 'auto' }} name="status" defaultValue={r.status} aria-label="Status">
                   {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
                 </select>
-                <button className="a-btn sm primary" type="submit">Update</button>
+                <button className="a-btn sm primary" type="submit"><Icon name="check" size={14} />Update</button>
               </div>
               <textarea className="a-input" name="notes" defaultValue={r.notes ?? ''} rows={2} placeholder="Notes (only visible to admins)" aria-label="Notes" />
             </form>
             <form action={deleteEnquiry} style={{ marginTop: 8 }}>
               <input type="hidden" name="id" value={r.id} />
-              <ConfirmButton className="a-btn sm danger" message="Delete this enquiry?">Delete</ConfirmButton>
+              <ConfirmButton className="a-btn sm danger" message="Delete this enquiry?"><Icon name="close" size={14} />Delete</ConfirmButton>
             </form>
           </div>
         </div>

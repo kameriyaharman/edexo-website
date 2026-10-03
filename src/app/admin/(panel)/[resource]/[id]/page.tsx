@@ -5,6 +5,8 @@ import { db } from '@/db';
 import { getResource, resources } from '@/admin/resources';
 import { AdminForm, ConfirmButton } from '@/admin/Fields';
 import { deleteRecord, saveRecord } from '@/admin/actions';
+import { Icon } from '@/components/Icon';
+import { iconForAdminPath } from '@/admin/nav';
 
 type Props = { params: Promise<{ resource: string; id: string }>; searchParams: Promise<{ saved?: string }> };
 
@@ -45,20 +47,20 @@ export default async function ResourceEdit({ params, searchParams }: Props) {
     <>
       <div className="a-top">
         <div>
-          <p style={{ marginBottom: 4 }}><Link href={`/admin/${res.key}`}>← {res.label}</Link></p>
-          <h1>{isNew ? `New ${res.singular}` : String(row.title ?? row.name ?? row.label ?? row.code ?? row.value ?? `Edit ${res.singular}`)}</h1>
+          <Link className="a-back" href={`/admin/${res.key}`}><Icon name="chevronLeft" size={16} />{res.label}</Link>
+          <h1><span className="a-title-ic"><Icon name={iconForAdminPath(`/admin/${res.key}`)} size={22} /></span>{isNew ? `New ${res.singular}` : String(row.title ?? row.name ?? row.label ?? row.code ?? row.value ?? `Edit ${res.singular}`)}</h1>
         </div>
         <div className="a-top-actions">
-          {view && <a className="a-btn" href={view} target="_blank" rel="noopener noreferrer">View on site ↗</a>}
+          {view && <a className="a-btn" href={view} target="_blank" rel="noopener noreferrer"><Icon name="globe" size={15} />View on site</a>}
           {!isNew && (
             <form action={deleteRecord}>
               <input type="hidden" name="__resource" value={res.key} /><input type="hidden" name="__id" value={String(row.id)} />
-              <ConfirmButton message={`Delete this ${res.singular}? This cannot be undone.`}>Delete</ConfirmButton>
+              <ConfirmButton message={`Delete this ${res.singular}? This cannot be undone.`}><Icon name="close" size={15} />Delete</ConfirmButton>
             </form>
           )}
         </div>
       </div>
-      <div className="a-card">
+      <div>
         <AdminForm action={saveRecord} fields={fields}
           hidden={{ __resource: res.key, __id: isNew ? '' : String(row.id) }}
           submitLabel={isNew ? `Create ${res.singular}` : 'Save changes'}

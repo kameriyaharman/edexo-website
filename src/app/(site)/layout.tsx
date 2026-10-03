@@ -20,7 +20,7 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
       <Effects />
       {wa && on(st, 'showWhatsappButton') && (
         <a className="wa-float" href={`https://wa.me/${wa}`} target="_blank" rel="noopener noreferrer" aria-label="Chat on WhatsApp">
-          <Icon name="chat" size={26} />
+          <Icon name="whatsapp" size={28} />
         </a>
       )}
     </>

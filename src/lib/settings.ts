@@ -12,6 +12,10 @@ export interface FieldDef {
   required?: boolean;
   options?: { value: string; label: string }[];
   placeholder?: string;
+  /** shown inside the input on the left, e.g. ₹ */
+  prefix?: string;
+  /** shows a live character counter */
+  maxLength?: number;
 }
 
 export interface SettingsGroup {
@@ -125,8 +129,8 @@ export const settingsGroups: SettingsGroup[] = [
   {
     key: 'seo', title: 'SEO & tracking',
     fields: [
-      { name: 'seoTitle', label: 'Default page title', type: 'text' },
-      { name: 'seoDescription', label: 'Default meta description', type: 'textarea' },
+      { name: 'seoTitle', label: 'Default page title', type: 'text', maxLength: 60 },
+      { name: 'seoDescription', label: 'Default meta description', type: 'textarea', maxLength: 160 },
       { name: 'ogImageId', label: 'Social share image', type: 'image' },
       { name: 'gtmId', label: 'Google Tag Manager ID (e.g. GTM-XXXX)', type: 'text' },
     ],

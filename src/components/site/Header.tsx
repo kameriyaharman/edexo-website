@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { getSettings, s, lines, imageId } from '@/lib/settings';
 import { getMenu } from '@/lib/data';
 import { mediaUrl } from '@/lib/format';
-import { Icon } from '@/components/Icon';
+import { Icon, iconFor } from '@/components/Icon';
 import { NavLinks } from './NavLinks';
 
 export async function Header() {
@@ -10,8 +10,8 @@ export async function Header() {
   const menu = await getMenu('header');
   const logo = mediaUrl(imageId(st, 'logoId'));
   const socials = [
-    ['Facebook', s(st, 'facebook')], ['Instagram', s(st, 'instagram')],
-    ['YouTube', s(st, 'youtube')], ['LinkedIn', s(st, 'linkedin')],
+    ['Facebook', s(st, 'facebook'), 'facebook'], ['Instagram', s(st, 'instagram'), 'instagram'],
+    ['YouTube', s(st, 'youtube'), 'youtube'], ['LinkedIn', s(st, 'linkedin'), 'linkedin'],
   ].filter(([, u]) => u);
   const wa = s(st, 'whatsapp').replace(/\D/g, '');
   const items = menu.map((m) => ({ label: m.label, href: m.href }));
@@ -25,14 +25,15 @@ export async function Header() {
           <div className="topbar-items">
             {lines(st, 'topbarItems').map((t) => {
               const [k, ...rest] = t.split(':');
+              const num = rest.join(':').trim();
               return rest.length ? (
-                <span key={t}><strong style={{ color: '#fff', fontWeight: 600 }}>{k}:</strong>{rest.join(':')}</span>
-              ) : <span key={t}>{t}</span>;
+                <a key={t} className="tb-item" href={`tel:${num.replace(/[^\d+]/g, '')}`}><Icon name="phone" size={14} /><strong>{k}:</strong> {num}</a>
+              ) : <span key={t} className="tb-item"><Icon name="info" size={14} />{t}</span>;
             })}
           </div>
           <div className="topbar-social">
-            {socials.map(([n, u]) => <a key={n} href={u} target="_blank" rel="noopener noreferrer">{n}</a>)}
-            {wa && <a href={`https://wa.me/${wa}`} target="_blank" rel="noopener noreferrer">WhatsApp</a>}
+            {socials.map(([n, u, ic]) => <a key={n} className="tb-social" href={u} target="_blank" rel="noopener noreferrer" aria-label={n}><Icon name={ic} size={15} /></a>)}
+            {wa && <a className="tb-social" href={`https://wa.me/${wa}`} target="_blank" rel="noopener noreferrer" aria-label="WhatsApp"><Icon name="whatsapp" size={15} /></a>}
           </div>
         </div>
       </div>
@@ -44,11 +45,11 @@ export async function Header() {
           <NavLinks items={items} />
           <div className="header-actions">
             {signIn && <a className="signin" href={signIn}>{s(st, 'signInLabel', 'Sign In')}</a>}
-            {cta && <Link className="btn btn-orange btn-sm" href={s(st, 'headerCtaHref', '/#enroll')}>{cta}</Link>}
+            {cta && <Link className="btn btn-orange btn-sm" href={s(st, 'headerCtaHref', '/#enroll')}><Icon name="cap" size={17} />{cta}</Link>}
             <details className="mobile-menu">
               <summary aria-label="Open menu"><Icon name="menu" size={22} /></summary>
               <nav className="panel" aria-label="Mobile">
-                {items.map((m) => <Link key={m.href + m.label} href={m.href}>{m.label}</Link>)}
+                {items.map((m) => <Link key={m.href + m.label} href={m.href}><Icon name={iconFor(m.label)} size={18} />{m.label}</Link>)}
                 {signIn && <a href={signIn}>{s(st, 'signInLabel', 'Sign In')}</a>}
               </nav>
             </details>
