@@ -8,6 +8,7 @@ import { getSettings, s } from '@/lib/settings';
 import { getLead, parseLeadRef, payableFor, razorpayConfig } from '@/lib/payments';
 import { inr, leadId, mediaUrl, waHref } from '@/lib/format';
 import { PayNow } from '@/components/site/PayNow';
+import { getAdmin } from '@/lib/auth';
 
 export const metadata: Metadata = { title: 'Thank you', robots: { index: false, follow: false } };
 
@@ -18,6 +19,12 @@ export default async function ThankYou({ params }: { params: Promise<{ ref: stri
   if (!lead) notFound();
   const st = await getSettings();
   const cfg = razorpayConfig(st);
+  const admin = cfg.enabled ? null : await getAdmin();
+  const missing = [
+    st.razorpayEnabled !== true && '"Show Pay Now" switch is OFF',
+    !/^rzp_(test|live)_\w+$/.test(s(st, 'razorpayKeyId').trim()) && 'Key ID is missing',
+    s(st, 'razorpayKeySecret').trim().length <= 8 && 'Key Secret is missing',
+  ].filter(Boolean) as string[];
   const { exact, items } = await payableFor(lead);
   const paid = await db.select().from(schema.payments).where(eq(schema.payments.enquiryId, lead.id)).orderBy(desc(schema.payments.createdAt));
   const done = paid.filter((p) => p.status === 'paid');
@@ -77,7 +84,17 @@ export default async function ThankYou({ params }: { params: Promise<{ ref: stri
               note={s(st, 'paymentNote')} paidText={s(st, 'paidText') || 'Thank you! Our team will share your batch details shortly.'} />
           ) : null}
 
-          <div className="ty-actions">
+          {admin && !done.length && (
+            <div className="ty-admin-note">
+              <Icon name="info" size={18} />
+              <div>
+                <strong>Only you (admin) can see this: the Pay Now button is hidden.</strong>
+                <span>{missing.join(' · ')}{options.length === 0 ? ' · this course has no fee in Courses & fees' : ''}.</span>
+                <Link href="/admin/settings/payments">Open Payments (Razorpay) settings →</Link>
+              </div>
+            </div>
+          )}
+                    <div className="ty-actions">
             {wa && <a className="btn btn-wa" href={wa} target="_blank" rel="noopener noreferrer"><Icon name="whatsapp" size={18} />WhatsApp Us</a>}
             {s(st, 'primaryPhone') && <a className="btn btn-navy" href={`tel:${s(st, 'primaryPhone').replace(/[^\d+]/g, '')}`}><Icon name="phone" size={18} />Call {s(st, 'primaryPhone')}</a>}
             <Link className="btn btn-ghost" href={main ? `/${main.course.slug}` : '/courses'}><Icon name="arrowRight" size={16} />{main ? 'Back to course' : 'Explore courses'}</Link>

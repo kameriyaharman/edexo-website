@@ -403,3 +403,7 @@
 .m-enroll { margin-top: 8px; justify-content: center; }
 .mobile-menu .panel a.m-enroll { background: var(--orange-dark); color: #fff; }
 .mobile-menu .panel a.m-enroll svg { color: #fff; }
+.ty-admin-note { width: 100%; display: flex; gap: 12px; align-items: flex-start; text-align: left; padding: 14px 16px; border-radius: 12px; background: #FFF6E0; border: 1.5px dashed #E0A100; color: #6B4A00; font-size: 14px; }
+.ty-admin-note svg { flex: none; margin-top: 2px; }
+.ty-admin-note strong, .ty-admin-note span, .ty-admin-note a { display: block; }
+.ty-admin-note a { color: var(--orange-text); font-weight: 700; margin-top: 4px; }
