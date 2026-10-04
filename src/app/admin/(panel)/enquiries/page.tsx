@@ -1,10 +1,10 @@
 import Link from 'next/link';
-import { count, desc, eq } from 'drizzle-orm';
+import { and, count, desc, eq, inArray } from 'drizzle-orm';
 import { db, schema } from '@/db';
 import { deleteEnquiry, updateEnquiry } from '@/admin/actions';
 import { ConfirmButton } from '@/admin/Fields';
 import { LEAD_TABS, STATUSES, leadWhere, statusLabel, type LeadFilters } from '@/admin/leads';
-import { leadId } from '@/lib/format';
+import { inr, leadId } from '@/lib/format';
 import { Icon } from '@/components/Icon';
 
 export const metadata = { title: 'Leads' };
@@ -31,6 +31,8 @@ export default async function Enquiries({ searchParams }: { searchParams: Promis
     db.selectDistinct({ country: e.country, language: e.language, source: e.source }).from(e).where(tabWhere),
   ]);
   const total = Number(n);
+  const ids = rows.map((r) => r.id);
+  const pays = ids.length ? await db.select().from(schema.payments).where(and(inArray(schema.payments.enquiryId, ids), eq(schema.payments.status, 'paid'))) : [];
   const cnt = Object.fromEntries(counts.map((c) => [c.status, Number(c.n)]));
   const newBy = Object.fromEntries(tabCounts.map((c) => [c.type, Number(c.n)]));
   const newIn = (t: string) => (t === 'leads' ? (newBy.enquiry ?? 0) + (newBy.international ?? 0) : newBy[t] ?? 0);
@@ -102,6 +104,7 @@ export default async function Enquiries({ searchParams }: { searchParams: Promis
                 <strong>{r.name}</strong>
                 <span className={`pill-s st-${r.status}`}>{statusLabel(r.status)}</span>
                 {r.type === 'international' && <span className="pill-s intl"><Icon name="globe" size={12} />International</span>}
+                {pays.filter((x) => x.enquiryId === r.id).map((x) => <span key={x.id} className="pill-s st-converted">Paid {inr(x.amount / 100)}</span>)}
               </div>
               <div className="meta-line">
                 <a href={`tel:${r.phone.replace(/[^\d+]/g, '')}`}><Icon name="phone" size={14} />{r.phone}</a>

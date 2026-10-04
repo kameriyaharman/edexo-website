@@ -8,7 +8,7 @@ export default async function robots(): Promise<MetadataRoute.Robots> {
   const st = await getSettings();
   if (!canIndex(st)) return { rules: [{ userAgent: '*', disallow: '/' }] };
   return {
-    rules: [{ userAgent: '*', allow: '/', disallow: ['/admin', '/api'] }],
+    rules: [{ userAgent: '*', allow: '/', disallow: ['/admin', '/api', '/thank-you'] }],
     sitemap: `${siteUrl()}/sitemap.xml`,
     host: siteUrl(),
   };

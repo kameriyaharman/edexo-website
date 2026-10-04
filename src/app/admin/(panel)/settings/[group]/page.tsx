@@ -24,7 +24,7 @@ export default async function SettingsPage({ params }: Props) {
         <div className="a-top-actions"><a className="a-btn" href="/" target="_blank" rel="noopener noreferrer"><Icon name="globe" size={15} />View website</a></div>
       </div>
       <AdminForm action={saveSettings} hidden={{ __group: group.key }} layout={group.fields.some((f) => f.type === 'image') ? 'split' : 'single'}
-        fields={group.fields.map((f) => ({ ...f, value: st[f.name] }))} />
+        fields={group.fields.map((f) => ({ ...f, value: f.type === 'secret' ? (st[f.name] ? 'set' : '') : st[f.name] }))} />
     </>
   );
 }

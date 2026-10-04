@@ -311,3 +311,23 @@ export const files = pgTable('files', {
   data: bytea('data').notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 });
+
+/** Course fee payments through Razorpay. Amounts are in paise. */
+export const payments = pgTable('payments', {
+  id: serial('id').primaryKey(),
+  enquiryId: integer('enquiry_id'),
+  courseId: integer('course_id'),
+  courseTitle: text('course_title').notNull(),
+  mode: text('mode').default(''),
+  amount: integer('amount').notNull(),
+  currency: text('currency').notNull().default('INR'),
+  orderId: text('order_id').notNull().unique(),
+  paymentId: text('payment_id'),
+  status: text('status').notNull().default('created'),
+  name: text('name').default(''),
+  email: text('email').default(''),
+  phone: text('phone').default(''),
+  method: text('method').default(''),
+  error: text('error').default(''),
+  ...timestamps,
+}, (t) => [index('payments_enquiry_idx').on(t.enquiryId)]);

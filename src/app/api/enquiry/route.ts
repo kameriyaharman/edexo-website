@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db, schema } from '@/db';
+import { leadRef } from '@/lib/payments';
 import { clip, looksLikeBot, rateLimited, spammyText, validEmail, validPhone } from '@/lib/spam';
 
 const TYPES = ['enquiry', 'demo', 'international', 'franchise'];
@@ -38,5 +39,6 @@ export async function POST(req: Request) {
     timing: get('timing', 40), timezone: get('timezone', 60), branch: get('branch', 80),
     source: get('source', 80) || 'Website', pageUrl: get('pageUrl', 300), extra,
   }).returning({ id: schema.enquiries.id });
-  return NextResponse.json({ ok: true, id: row.id });
+  // demo / course / international enquiries continue to the Thank-you (and Pay Now) page
+  return NextResponse.json({ ok: true, ...(type !== 'franchise' ? { next: `/thank-you/${leadRef(row.id)}` } : {}) });
 }

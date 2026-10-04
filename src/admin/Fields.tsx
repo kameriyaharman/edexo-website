@@ -186,6 +186,12 @@ export function Field(p: FieldProps) {
         </select>
       );
       break;
+    case 'secret':
+      input = (
+        <input id={`f-${name}`} name={name} type="password" autoComplete="new-password" defaultValue=""
+          placeholder={str ? '•••••••••••• saved — type to replace' : 'Not set'} />
+      );
+      break;
     default:
       input = maxLength ? <Counted {...p} /> : <input id={`f-${name}`} name={name} type={type === 'url' ? 'url' : 'text'} defaultValue={str} required={required} placeholder={placeholder ?? (type === 'url' ? 'https://' : undefined)} />;
   }

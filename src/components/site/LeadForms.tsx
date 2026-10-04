@@ -33,8 +33,14 @@ function useSubmit(endpoint: string, type: string, source: string) {
         : { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(Object.fromEntries(fd.entries())) });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json.error || 'Could not send. Please try again.');
-      setState('ok');
       trackLead(String(fd.get('type')), { language: String(fd.get('language') || ''), form_source: source });
+      if (typeof json.next === 'string' && json.next.startsWith('/thank-you/')) {
+        // short pause so analytics events are sent before leaving the page
+        setTimeout(() => window.location.assign(json.next), 350);
+        setState('sending');
+        return;
+      }
+      setState('ok');
       form.reset();
       form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     } catch (err) {

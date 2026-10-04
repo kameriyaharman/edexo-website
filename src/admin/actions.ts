@@ -84,7 +84,11 @@ export async function saveSettings(_: FormState, fd: FormData): Promise<FormStat
   try {
     const [row] = await db.select().from(schema.settings).where(eq(schema.settings.id, 1)).limit(1);
     const data = { ...(row?.data ?? {}) } as Record<string, unknown>;
-    for (const f of group.fields) data[f.name] = await readField(f, fd);
+    for (const f of group.fields) {
+      const v = await readField(f, fd);
+      if (f.type === 'secret' && v === '' && fd.get(`${f.name}__clear`) !== 'on') continue; // keep the saved secret
+      data[f.name] = v;
+    }
     if (row) await db.update(schema.settings).set({ data, updatedAt: new Date() }).where(eq(schema.settings.id, 1));
     else await db.insert(schema.settings).values({ id: 1, data });
   } catch (e) {

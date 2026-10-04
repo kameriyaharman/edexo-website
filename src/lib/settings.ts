@@ -2,7 +2,7 @@ import { cache } from 'react';
 import { eq } from 'drizzle-orm';
 import { db, schema } from '@/db';
 
-export type FieldType = 'text' | 'textarea' | 'lines' | 'markdown' | 'number' | 'boolean' | 'image' | 'select' | 'date' | 'url';
+export type FieldType = 'text' | 'textarea' | 'lines' | 'markdown' | 'number' | 'boolean' | 'image' | 'select' | 'date' | 'url' | 'secret';
 
 export interface FieldDef {
   name: string;
@@ -177,6 +177,21 @@ export const settingsGroups: SettingsGroup[] = [
       { name: 'robotsIndex', label: 'Allow Google to index the website', type: 'boolean', help: 'Keep ON for the live site. The Railway preview address is never indexed.' },
       { name: 'googleVerification', label: 'Google Search Console verification code', type: 'text', placeholder: 'content value of the google-site-verification tag' },
       { name: 'bingVerification', label: 'Bing Webmaster verification code', type: 'text' },
+    ],
+  },
+  {
+    key: 'payments', title: 'Payments (Razorpay)',
+    description: 'After an enquiry form is sent, students land on a Thank-you page showing their course and fee with a "Pay Now" button.',
+    fields: [
+      { name: 'razorpayEnabled', label: 'Show "Pay Now" on the Thank-you page', type: 'boolean', help: 'Needs the Key ID and Key Secret below.' },
+      { name: 'razorpayKeyId', label: 'Razorpay Key ID', type: 'text', placeholder: 'rzp_live_… or rzp_test_…', help: 'Razorpay Dashboard → Account & Settings → API Keys.' },
+      { name: 'razorpayKeySecret', label: 'Razorpay Key Secret', type: 'secret', help: 'Stored on the server only, never shown on the website. Leave empty to keep the saved secret.' },
+      { name: 'razorpayWebhookSecret', label: 'Razorpay Webhook Secret (recommended)', type: 'secret', help: 'Dashboard → Webhooks → add {site}/api/pay/webhook with events payment.captured, payment.failed, order.paid. Leave empty to keep the saved one.' },
+      { name: 'paymentBrandName', label: 'Name shown in the payment window', type: 'text', placeholder: 'Edexo' },
+      { name: 'thankYouTitle', label: 'Thank-you page: heading', type: 'text', placeholder: 'Thank you! Your enquiry has been received.' },
+      { name: 'thankYouText', label: 'Thank-you page: text', type: 'textarea' },
+      { name: 'paymentNote', label: 'Note under the Pay Now button', type: 'textarea', placeholder: 'Fees are confirmed by our team before your batch starts…' },
+      { name: 'paidText', label: 'Message after a successful payment', type: 'textarea' },
     ],
   },
   {
