@@ -17,6 +17,7 @@ export async function Header() {
   const items = menu.map((m) => ({ label: m.label, href: m.href, children: m.children.map((c) => ({ label: c.label, href: c.href, description: c.description })) }));
   const signIn = s(st, 'signInHref');
   const cta = s(st, 'headerCtaLabel');
+  const enroll = st.enrollLabel === undefined ? 'Enroll Now' : s(st, 'enrollLabel');
 
   return (
     <>
@@ -34,6 +35,7 @@ export async function Header() {
           <div className="topbar-social">
             {socials.map(([n, u, ic]) => <a key={n} className="tb-social" href={u} target="_blank" rel="noopener noreferrer" aria-label={n}><Icon name={ic} size={15} /></a>)}
             {wa && <a className="tb-social" href={`https://wa.me/${wa}`} target="_blank" rel="noopener noreferrer" aria-label="WhatsApp"><Icon name="whatsapp" size={15} /></a>}
+            {enroll && <Link className="tb-enroll" href={s(st, 'enrollHref', '/enroll')} data-cta="topbar_enroll"><Icon name="cap" size={14} />{enroll}</Link>}
           </div>
         </div>
       </div>
@@ -50,6 +52,7 @@ export async function Header() {
               <summary aria-label="Open menu"><Icon name="menu" size={22} /></summary>
               <nav className="panel" aria-label="Mobile">
                 <MobileNav items={items} />
+                {enroll && <Link className="btn m-enroll" href={s(st, 'enrollHref', '/enroll')} data-cta="menu_enroll"><Icon name="cap" size={18} />{enroll}</Link>}
                 {signIn && <a href={signIn}>{s(st, 'signInLabel', 'Sign In')}</a>}
               </nav>
             </details>

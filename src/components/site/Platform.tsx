@@ -136,7 +136,12 @@ export function FeeTable({ p, link = true }: { p: Program; link?: boolean }) {
               <th scope="row">{link ? <Link href={`/${c.slug}`}>{c.level || c.title}</Link> : c.level || c.title}</th>
               {hasAny && (same ? <td data-label="Fee">{cell(c.price)}</td> : <><td data-label="Online">{cell(c.price)}</td><td data-label="Offline">{cell(c.priceOffline)}</td></>)}
               <td data-label="Duration">{c.duration || '—'}</td>
-              {link && <td className="fee-go"><Link href={`/${c.slug}`} aria-label={`${c.title} details`}>Details<Icon name="arrowRight" size={14} /></Link></td>}
+              {link && (
+                <td className="fee-go">
+                  <Link href={`/${c.slug}`} aria-label={`${c.title} details`}>Details<Icon name="arrowRight" size={14} /></Link>
+                  <Link className="fee-enroll" href={`/enroll?course=${c.slug}`} data-cta="fee_row_enroll" aria-label={`Enroll in ${c.title}`}>Enroll</Link>
+                </td>
+              )}
             </tr>
           ))}
         </tbody>

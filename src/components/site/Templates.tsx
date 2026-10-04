@@ -149,7 +149,8 @@ export async function ProgramPage({ p }: { p: Program }) {
             {img && <img src={img} alt={`${p.name} classes at Edexo`} />}
             <h3>Start learning {p.name}</h3>
             <Ticks items={['Free demo class', 'Online & offline batches', 'Group & one-to-one', `${p.courses.length} ${p.courses.length === 1 ? 'level' : 'levels'}`]} />
-            <Link className="btn btn-orange full" href="#enquiry" data-cta="program_demo"><Icon name="video" size={18} />Book Free Demo</Link>
+            <Link className="btn btn-orange full" href={`/enroll?program=${p.slug}`} data-cta="program_enroll"><Icon name="cap" size={18} />Enroll Now</Link>
+            <Link className="btn btn-enroll full" href="#enquiry" data-cta="program_demo"><Icon name="video" size={18} />Book Free Demo</Link>
             {wa && <a className="btn btn-wa full" href={wa} target="_blank" rel="noopener noreferrer"><Icon name="whatsapp" size={18} />WhatsApp Us</a>}
           </aside>
         </div>
@@ -260,7 +261,8 @@ export async function CoursePage({ c, program }: { c: CourseRow; program: Progra
               {c.format && <li><Icon name="users" size={18} /><span><small>Format</small>{c.format}</span></li>}
               {c.timings && <li><Icon name="calendar" size={18} /><span><small>Timings</small>{c.timings}</span></li>}
             </ul>
-            <Link className="btn btn-orange full" href="#enquiry" data-cta="course_demo"><Icon name="video" size={18} />Book Free Demo</Link>
+            <Link className="btn btn-orange full" href={`/enroll?course=${c.slug}`} data-cta="course_enroll"><Icon name="cap" size={18} />Enroll Now</Link>
+            <Link className="btn btn-enroll full" href="#enquiry" data-cta="course_demo"><Icon name="video" size={18} />Book Free Demo</Link>
             {wa && <a className="btn btn-wa full" href={wa} target="_blank" rel="noopener noreferrer"><Icon name="whatsapp" size={18} />WhatsApp Us</a>}
             <Link className="aside-link" href="#enquiry" data-cta="course_details"><Icon name="file" size={15} />Get course details</Link>
           </aside>
@@ -291,7 +293,8 @@ export async function FeesPage() {
                   {p.feeNote && <p className="muted">{p.feeNote}</p>}
                 </div>
                 <div className="cta-actions">
-                  <Link className="btn btn-orange btn-sm" href={`/${p.slug}#enquiry`} data-cta="fees_demo"><Icon name="video" size={16} />Book Free Demo</Link>
+                  <Link className="btn btn-orange btn-sm" href={`/enroll?program=${p.slug}`} data-cta="fees_enroll"><Icon name="cap" size={16} />Enroll Now</Link>
+                  <Link className="btn btn-enroll btn-sm" href={`/${p.slug}#enquiry`} data-cta="fees_demo"><Icon name="video" size={16} />Book Free Demo</Link>
                   <Link className="btn btn-navy btn-sm" href={`/${p.slug}`}><Icon name="file" size={16} />Get Course Details</Link>
                 </div>
               </div>

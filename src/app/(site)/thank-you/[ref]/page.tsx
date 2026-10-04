@@ -22,6 +22,7 @@ export default async function ThankYou({ params }: { params: Promise<{ ref: stri
   const paid = await db.select().from(schema.payments).where(eq(schema.payments.enquiryId, lead.id)).orderBy(desc(schema.payments.createdAt));
   const done = paid.filter((p) => p.status === 'paid');
   const first = lead.name.split(' ')[0];
+  const enrol = lead.courseType === 'Enrolment';
   const main = exact ? items[0] : null;
   const wa = waHref(s(st, 'whatsapp'), `Hi Edexo, my enquiry reference is ${leadId(lead.id)}${main ? ` for ${main.course.title}` : ''}.`);
   const options = items.filter((i) => i.online || i.offline).map((i) => ({
@@ -33,15 +34,24 @@ export default async function ThankYou({ params }: { params: Promise<{ ref: stri
       <div className="wrap ty-wrap">
         <div className="card ty-card">
           <span className="ty-check"><Icon name="check" size={40} stroke={3} /></span>
-          <h1>{s(st, 'thankYouTitle') || `Thank you, ${first}!`}</h1>
-          <p className="ty-lead">{s(st, 'thankYouText') || 'Your enquiry has been received. Our team will contact you shortly on WhatsApp or phone to confirm your batch and demo class.'}</p>
+          {enrol && !done.length && main && cfg.enabled && (main.online || main.offline) ? (
+            <>
+              <h1>Almost done, {first}!</h1>
+              <p className="ty-lead">Your enrolment details are saved. Complete the payment below to confirm your seat — our team will then share your batch details on WhatsApp.</p>
+            </>
+          ) : (
+            <>
+              <h1>{s(st, 'thankYouTitle') || `Thank you, ${first}!`}</h1>
+              <p className="ty-lead">{s(st, 'thankYouText') || (enrol ? 'Your enrolment request has been received. Our team will contact you shortly on WhatsApp or phone with the next steps.' : 'Your enquiry has been received. Our team will contact you shortly on WhatsApp or phone to confirm your batch and demo class.')}</p>
+            </>
+          )}
           <p className="ty-ref">Reference: <strong>{leadId(lead.id)}</strong></p>
 
           {main && (
             <div className="ty-course">
               {main.course.imageId && <img src={mediaUrl(main.course.imageId)!} alt="" />}
               <div>
-                <small>You enquired for</small>
+                <small>{enrol ? 'Your course' : 'You enquired for'}</small>
                 <h2>{main.course.title}</h2>
                 <div className="ty-meta">
                   {main.course.level && <span><Icon name="layers" size={15} />{main.course.level}</span>}

@@ -53,6 +53,8 @@ export const settingsGroups: SettingsGroup[] = [
       { name: 'topbarItems', label: 'Top bar items (one per line)', type: 'lines' },
       { name: 'headerCtaLabel', label: 'Header button label', type: 'text' },
       { name: 'headerCtaHref', label: 'Header button link', type: 'text' },
+      { name: 'enrollLabel', label: '"Enroll Now" button in the top bar & mobile menu (empty = hide)', type: 'text', placeholder: 'Enroll Now' },
+      { name: 'enrollHref', label: '"Enroll Now" link', type: 'text', placeholder: '/enroll' },
       { name: 'signInLabel', label: 'Sign-in link label', type: 'text' },
       { name: 'signInHref', label: 'Sign-in link URL (leave empty to hide)', type: 'text' },
     ],

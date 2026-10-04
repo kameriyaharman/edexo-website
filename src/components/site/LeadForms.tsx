@@ -214,3 +214,79 @@ export function CareerForm({ positions, languages }: { positions: string[]; lang
     </form>
   );
 }
+
+/* ---------- Enroll Now: choose course → details → Thank-you page with Pay Now ---------- */
+export type EnrollCourse = {
+  id: number; slug: string; title: string; level: string; program: string; programSlug: string;
+  online: number | null; offline: number | null; duration: string;
+};
+
+const rupee = (n: number) => '₹' + n.toLocaleString('en-IN');
+
+export function EnrollForm({ courses, defaultSlug, defaultProgram, branches, kidsLabel }: { courses: EnrollCourse[]; defaultSlug?: string; defaultProgram?: string; branches: string[]; kidsLabel: string }) {
+  const programs = [...new Map(courses.map((c) => [c.programSlug, c.program])).entries()];
+  const initial = courses.find((c) => c.slug === defaultSlug);
+  const [prog, setProg] = useState(initial?.programSlug ?? (programs.some(([sl]) => sl === defaultProgram) ? defaultProgram! : ''));
+  const [slug, setSlug] = useState(initial?.slug ?? '');
+  const levels = courses.filter((c) => c.programSlug === prog);
+  const course = courses.find((c) => c.slug === slug && c.programSlug === prog) ?? null;
+  const differs = !!course && !!course.online && !!course.offline && course.online !== course.offline;
+  const [mode, setMode] = useState<'Online' | 'Offline'>('Online');
+  const [country, setCountry] = useState('India');
+  const fee = course ? (mode === 'Offline' ? course.offline ?? course.online : course.online ?? course.offline) : null;
+  const { state, error, submit } = useSubmit('/api/enquiry', 'enquiry', 'Enroll page');
+  const id = (n: string) => `enroll-${n}`;
+
+  return (
+    <form className="card enquiry-form lead-full enroll-form" onSubmit={(e) => submit(e)}>
+      <Msg state={state} error={error} success="Thank you! Our team will contact you shortly." />
+      <input type="hidden" name="courseType" value="Enrolment" />
+      <input type="hidden" name="course" value={course?.title ?? ''} />
+      <input type="hidden" name="language" value={course ? (course.program.toLowerCase().includes('kids') ? kidsLabel : course.program) : ''} />
+      <input type="hidden" name="level" value={course?.level ?? ''} />
+      <input type="hidden" name="mode" value={mode} />
+
+      <div className="full enroll-step"><span>1</span>Choose your course</div>
+      <F label="Program" icon="languages" htmlFor={id('program')}>
+        <select id={id('program')} value={prog} required onChange={(e) => { setProg(e.target.value); setSlug(''); }}>
+          <option value="">Select program</option>
+          {programs.map(([s, n]) => <option key={s} value={s}>{n}</option>)}
+        </select>
+      </F>
+      <F label="Level" icon="layers" htmlFor={id('level')}>
+        <select id={id('level')} value={slug} required disabled={!prog} onChange={(e) => setSlug(e.target.value)}>
+          <option value="">{prog ? 'Select level' : 'Choose a program first'}</option>
+          {levels.map((c) => <option key={c.slug} value={c.slug}>{c.level || c.title}{c.duration ? ` · ${c.duration}` : ''}</option>)}
+        </select>
+      </F>
+      <div className="full pay-modes" role="radiogroup" aria-label="Class mode">
+        {(['Online', 'Offline'] as const).map((m) => {
+          const price = course ? (m === 'Online' ? course.online : course.offline) : null;
+          return (
+            <button key={m} type="button" role="radio" aria-checked={mode === m} className={mode === m ? 'on' : ''} onClick={() => setMode(m)}>
+              <Icon name={m === 'Online' ? 'laptop' : 'building'} size={16} />{m} class{price && (differs || m === 'Online') ? <strong>{rupee(price)}</strong> : null}
+            </button>
+          );
+        })}
+      </div>
+      {mode === 'Offline' && branches.length > 0 && (
+        <F label="Centre" icon="pin" full htmlFor={id('branch')}><Sel id={id('branch')} name="branch" options={branches} /></F>
+      )}
+
+      <div className="full enroll-step"><span>2</span>Your details</div>
+      <F label="Full name" icon="user" htmlFor={id('name')}><input id={id('name')} name="name" required autoComplete="name" placeholder="Student name" /></F>
+      <F label="Country" icon="globe" htmlFor={id('country')}><Sel id={id('country')} name="country" options={countries.map(([c]) => c)} value={country} onChange={setCountry} /></F>
+      <PhoneField id={id('phone')} country={country} />
+      <F label="Email" icon="mail" htmlFor={id('email')}><input id={id('email')} name="email" type="email" required autoComplete="email" placeholder="For your receipt" /></F>
+      <Honeypot />
+
+      {course && (
+        <div className="full pay-total"><span>{course.title} · {mode}</span><strong>{fee ? rupee(fee) : 'Fee on enquiry'}</strong></div>
+      )}
+      <button type="submit" className="btn btn-orange btn-lg full" disabled={state === 'sending' || !course} data-cta="enroll_submit">
+        {state === 'sending' ? 'Please wait…' : <><Icon name="cap" size={19} />{fee ? 'Continue to Payment' : 'Enroll Now'}</>}
+      </button>
+      <p className="form-note full"><Icon name="shield" size={14} />Next step: review your course and pay securely with Razorpay.</p>
+    </form>
+  );
+}
