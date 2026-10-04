@@ -332,3 +332,9 @@
 @media (max-width: 520px) { .cookie-bar { right: 16px; max-width: none; bottom: 88px; } }
 @media (min-width: 1521px) and (max-width: 1600px) { .nav { gap: 18px; } }
 @media (max-width: 520px) { .header .wrap { padding-left: 16px; padding-right: 16px; } }
+
+/* form fields in 2-column grids: align inputs to the row bottom so the icon (bottom-anchored) always sits inside its input,
+   even when the neighbour's label wraps to two lines */
+.enquiry-form > .field, .contact-form > .field { align-self: end; }
+.enquiry-form > .field.full, .contact-form > .field.full { align-self: stretch; }
+.phone-input .input-ic { left: 12px; }

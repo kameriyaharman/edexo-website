@@ -75,7 +75,7 @@ function Honeypot() {
   return <input className="hp" name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" />;
 }
 
-function PhoneField({ id, label = 'WhatsApp number (with country code)', country, required = true }: { id: string; label?: string; country: string; required?: boolean }) {
+function PhoneField({ id, label = 'WhatsApp number', country, required = true }: { id: string; label?: string; country: string; required?: boolean }) {
   const dial = countries.find(([c]) => c === country)?.[1] ?? '+91';
   const dials = [...new Set(countries.map(([, d]) => d).filter(Boolean))].sort((a, b) => Number(a.slice(1)) - Number(b.slice(1)));
   return (

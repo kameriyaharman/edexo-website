@@ -18,6 +18,22 @@ export function NavLinks({ items }: { items: NavItem[] }) {
     document.querySelectorAll('details.mobile-menu[open], details.m-sub[open]').forEach((d) => d.removeAttribute('open'));
     (document.activeElement as HTMLElement | null)?.blur?.();
   }, [path]);
+  // close the mobile menu on an outside click / tap or Escape
+  useEffect(() => {
+    const close = () => document.querySelectorAll('details.mobile-menu[open]').forEach((d) => d.removeAttribute('open'));
+    const onDown = (e: PointerEvent) => {
+      const t = e.target as Element | null;
+      if (t && !t.closest('details.mobile-menu')) close();
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      close();
+      (document.activeElement as HTMLElement | null)?.closest('.nav-dd') && (document.activeElement as HTMLElement).blur();
+    };
+    document.addEventListener('pointerdown', onDown);
+    document.addEventListener('keydown', onKey);
+    return () => { document.removeEventListener('pointerdown', onDown); document.removeEventListener('keydown', onKey); };
+  }, []);
   return (
     <nav className="nav" aria-label="Main">
       {items.map((m) => {
