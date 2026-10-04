@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db, schema } from '@/db';
-import { clip, looksLikeBot, rateLimited, validEmail, validPhone } from '@/lib/spam';
+import { clip, botCheck, rateLimited, validEmail, validPhone } from '@/lib/spam';
 
 const MAX = 5 * 1024 * 1024;
 const OK_TYPES: Record<string, string> = {
@@ -14,7 +14,8 @@ export async function POST(req: Request) {
   let fd: FormData;
   try { fd = await req.formData(); } catch { return NextResponse.json({ error: 'Invalid request' }, { status: 400 }); }
   const get = (k: string, n = 200) => clip(fd.get(k), n);
-  if (looksLikeBot(get)) return NextResponse.json({ ok: true });
+  const bot = botCheck(get);
+  if (bot === 'drop') return NextResponse.json({ ok: true });
 
   const name = get('name', 120);
   const phone = get('phone', 40);
@@ -42,6 +43,7 @@ export async function POST(req: Request) {
   await db.insert(schema.enquiries).values({
     type: 'career', name, phone, email, language: get('language', 80), course: get('position', 120), message: get('message', 3000),
     source: 'Careers page', pageUrl: get('pageUrl', 300), country: 'India', extra, fileId: f.id,
+    notes: bot === 'flag' ? 'Possible spam: the hidden anti-spam field was filled (can also be browser AutoFill).' : '',
   });
   return NextResponse.json({ ok: true });
 }

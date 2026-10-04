@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db, schema } from '@/db';
 import { leadRef } from '@/lib/payments';
-import { clip, looksLikeBot, rateLimited, spammyText, validEmail, validPhone } from '@/lib/spam';
+import { clip, botCheck, rateLimited, spammyText, validEmail, validPhone } from '@/lib/spam';
 
 const TYPES = ['enquiry', 'demo', 'international', 'franchise'];
 const FRANCHISE_EXTRA = ['city', 'state', 'business', 'investment', 'location', 'experience'];
@@ -13,7 +13,8 @@ export async function POST(req: Request) {
   try { body = await req.json(); } catch { return NextResponse.json({ error: 'Invalid request' }, { status: 400 }); }
   const get = (k: string, n = 200) => clip(body[k], n);
 
-  if (looksLikeBot(get)) return NextResponse.json({ ok: true });
+  const bot = botCheck(get);
+  if (bot === 'drop') return NextResponse.json({ ok: true });
 
   const name = get('name', 120);
   const phone = get('phone', 40);
@@ -38,6 +39,7 @@ export async function POST(req: Request) {
     courseType: get('courseType', 80), mode: get('mode', 20), format: get('format', 20), exam: get('exam', 60),
     timing: get('timing', 40), timezone: get('timezone', 60), branch: get('branch', 80),
     source: get('source', 80) || 'Website', pageUrl: get('pageUrl', 300), extra,
+    notes: bot === 'flag' ? 'Possible spam: the hidden anti-spam field was filled (can also be browser AutoFill).' : '',
   }).returning({ id: schema.enquiries.id });
   // demo / course / international enquiries continue to the Thank-you (and Pay Now) page
   return NextResponse.json({ ok: true, ...(type !== 'franchise' ? { next: `/thank-you/${leadRef(row.id)}` } : {}) });

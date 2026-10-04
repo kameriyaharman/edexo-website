@@ -78,7 +78,12 @@ function Msg({ state, error, success }: { state: Status; error: string; success:
 }
 
 function Honeypot() {
-  return <input className="hp" name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" />;
+  // deliberately meaningless name so browser AutoFill (Safari contact card, Chrome) never fills it
+  return (
+    <div className="hp" aria-hidden="true">
+      <label>Leave this empty<input name="edx_trap_x9" type="text" tabIndex={-1} autoComplete="new-password" defaultValue="" data-lpignore="true" data-1p-ignore="true" /></label>
+    </div>
+  );
 }
 
 function PhoneField({ id, label = 'WhatsApp number', country, required = true }: { id: string; label?: string; country: string; required?: boolean }) {

@@ -14,14 +14,16 @@ export function rateLimited(req: Request, bucket: string, max = 8) {
 }
 
 /**
- * Bot checks: a hidden "website" field humans never fill, and a time trap —
- * forms submitted less than 2.5 s after the page loaded are almost always bots.
- * Bots get a fake success so they don't retry.
+ * Bot checks. Returns:
+ * - 'drop'  : almost certainly a script (submitted < 1.2 s after the page loaded) — fake success, nothing saved
+ * - 'flag'  : the hidden trap field was filled — saved anyway (AutoFill can do this) but marked as possible spam
+ * - false   : looks human
  */
-export function looksLikeBot(get: (k: string) => string) {
-  if (get('website')) return true;
+export function botCheck(get: (k: string) => string): 'drop' | 'flag' | false {
   const t = Number(get('_t'));
-  return Number.isFinite(t) && t > 0 && t < 2500;
+  if (Number.isFinite(t) && t > 0 && t < 1200) return 'drop';
+  if (get('edx_trap_x9') || get('website')) return 'flag';
+  return false;
 }
 
 const URLS = /(https?:\/\/|www\.)/gi;
