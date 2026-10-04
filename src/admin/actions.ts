@@ -11,6 +11,7 @@ import { slugify } from '@/lib/format';
 import { getResource } from './resources';
 import { saveUpload } from './media';
 import { STATUS_KEYS } from './leads';
+import { normalizeBlocks } from '@/lib/blocks';
 
 export type FormState = { error?: string; ok?: string } | undefined;
 
@@ -63,6 +64,9 @@ async function readField(f: FieldDef, fd: FormData): Promise<unknown> {
       const v = String(raw ?? '');
       if (f.name.endsWith('Id')) return v ? Number(v) : null;
       return v;
+    }
+    case 'blocks': {
+      try { return normalizeBlocks(JSON.parse(String(raw ?? '[]'))); } catch { throw new Error(`${f.label}: could not read the sections`); }
     }
     case 'date': {
       const v = String(raw ?? '');

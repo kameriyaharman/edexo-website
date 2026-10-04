@@ -295,3 +295,74 @@ export function EnrollForm({ courses, defaultSlug, defaultProgram, branches, kid
     </form>
   );
 }
+
+/* ---------- Germany eligibility forms (Ausbildung / Study in Germany) ---------- */
+const QUALS = ['Class 10', 'Class 12', 'Diploma', "Bachelor's degree", "Master's degree", 'Other'];
+const DE_LEVELS = ['No German yet', 'A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
+
+export function EligibilityForm({ kind, button, success, fields }: {
+  kind: 'ausbildung' | 'study'; button?: string; success?: string; fields?: { careerFields?: string[]; courses?: string[]; intakes?: string[] };
+}) {
+  const [intent, setIntent] = useState('Eligibility check');
+  useEffect(() => {
+    const read = () => { if (/counsel/i.test(window.location.hash)) setIntent('Free counselling'); else if (/eligib/i.test(window.location.hash)) setIntent('Eligibility check'); };
+    // Next.js links change the hash without a hashchange event, so also watch clicks on #counselling / #eligibility links
+    const onClick = (e: MouseEvent) => {
+      const a = (e.target as Element | null)?.closest?.('a[href*="#"]') as HTMLAnchorElement | null;
+      const h = a?.getAttribute('href') ?? '';
+      if (/#counsel/i.test(h)) setIntent('Free counselling'); else if (/#eligib/i.test(h)) setIntent('Eligibility check');
+    };
+    read(); window.addEventListener('hashchange', read); document.addEventListener('click', onClick, true);
+    return () => { window.removeEventListener('hashchange', read); document.removeEventListener('click', onClick, true); };
+  }, []);
+  const { state, error, submit } = useSubmit('/api/enquiry', kind, kind === 'ausbildung' ? 'Ausbildung page' : 'Study in Germany page');
+  const id = (n: string) => `${kind}-${n}`;
+  const ok = success ?? (kind === 'ausbildung'
+    ? 'Thank you! Our Ausbildung counsellor will review your details and contact you shortly.'
+    : 'Thank you! Our Study in Germany counsellor will review your profile and contact you shortly.');
+  return (
+    <form className="card enquiry-form lead-full elig-form" onSubmit={(e) => submit(e)}>
+      <Msg state={state} error={error} success={ok} />
+      <input type="hidden" name="language" value="German" />
+      <input type="hidden" name="courseType" value={kind === 'ausbildung' ? 'Ausbildung' : 'Study in Germany'} />
+      <div className="full pay-modes" role="radiogroup" aria-label="I would like">
+        {['Eligibility check', 'Free counselling'].map((v) => (
+          <button key={v} type="button" role="radio" aria-checked={intent === v} className={intent === v ? 'on' : ''} onClick={() => setIntent(v)}>
+            <Icon name={v === 'Eligibility check' ? 'checkCircle' : 'headphones'} size={16} />{v}
+          </button>
+        ))}
+      </div>
+      <input type="hidden" name="intent" value={intent} />
+      <F label="Full name" icon="user" htmlFor={id('name')}><input id={id('name')} name="name" required autoComplete="name" placeholder="Your name" /></F>
+      <PhoneField id={id('phone')} label="Mobile / WhatsApp number" country="India" />
+      <F label="Email" icon="mail" htmlFor={id('email')}><input id={id('email')} name="email" type="email" autoComplete="email" placeholder="you@example.com" /></F>
+      {kind === 'ausbildung' ? (
+        <>
+          <F label="Age" icon="user" htmlFor={id('age')}><input id={id('age')} name="age" type="number" min={15} max={60} inputMode="numeric" placeholder="e.g. 21" /></F>
+          <F label="Highest qualification" icon="cap" htmlFor={id('qualification')}><Sel id={id('qualification')} name="qualification" options={QUALS} placeholder="Select" required /></F>
+          <F label="German language level" icon="languages" htmlFor={id('level')}><Sel id={id('level')} name="level" options={DE_LEVELS} placeholder="Select" /></F>
+          <F label="Work experience" icon="briefcase" htmlFor={id('experience')}><Sel id={id('experience')} name="experience" options={['None', 'Less than 1 year', '1–2 years', '3–5 years', 'More than 5 years']} placeholder="Select" /></F>
+          <F label="Preferred Ausbildung field" icon="target" htmlFor={id('field')}><Sel id={id('field')} name="field" options={[...(fields?.careerFields ?? []), 'Not sure yet']} placeholder="Select field" /></F>
+          <F label="Current city" icon="pin" htmlFor={id('city')}><input id={id('city')} name="city" autoComplete="address-level2" placeholder="City" /></F>
+        </>
+      ) : (
+        <>
+          <F label="Highest qualification" icon="cap" htmlFor={id('qualification')}><Sel id={id('qualification')} name="qualification" options={QUALS} placeholder="Select" required /></F>
+          <F label="Academic percentage / CGPA" icon="award" htmlFor={id('score')}><input id={id('score')} name="score" placeholder="e.g. 78% or 8.2 CGPA" /></F>
+          <F label="Passing year" icon="calendar" htmlFor={id('year')}><input id={id('year')} name="year" type="number" min={1990} max={2035} inputMode="numeric" placeholder="e.g. 2026" /></F>
+          <F label="Preferred course" icon="book" htmlFor={id('course')}><Sel id={id('course')} name="course" options={[...(fields?.courses ?? []), 'Not sure yet']} placeholder="Select area" /></F>
+          <F label="Preferred intake" icon="calendar" htmlFor={id('intake')}><Sel id={id('intake')} name="intake" options={[...(fields?.intakes ?? []), 'Later / not sure']} placeholder="Select intake" /></F>
+          <F label="Degree you want" icon="layers" htmlFor={id('degree')}><Sel id={id('degree')} name="degree" options={["Bachelor's", "Master's", 'Studienkolleg', 'Not sure']} placeholder="Select" /></F>
+          <F label="German / English language level" icon="languages" htmlFor={id('levels')}><input id={id('levels')} name="langLevels" placeholder="e.g. German A2, IELTS 6.5" /></F>
+          <F label="University preference" icon="building" htmlFor={id('pref')}><Sel id={id('pref')} name="preference" options={['Public university', 'Private university', 'Either / not sure']} placeholder="Select" /></F>
+          <F label="Budget range (per year)" icon="wallet" htmlFor={id('budget')}><Sel id={id('budget')} name="budget" options={['Under ₹5 lakh', '₹5–10 lakh', '₹10–15 lakh', 'Above ₹15 lakh', 'Prefer to discuss']} placeholder="Select" /></F>
+        </>
+      )}
+      <F label="Message" icon="chat" full htmlFor={id('message')}><textarea id={id('message')} name="message" placeholder="Anything you'd like our counsellor to know" /></F>
+      <Honeypot />
+      <button type="submit" className="btn btn-orange btn-lg full" disabled={state === 'sending'} data-cta={`${kind}_eligibility`}>
+        {state === 'sending' ? 'Sending…' : <><Icon name={intent === 'Free counselling' ? 'headphones' : 'checkCircle'} size={19} />{intent === 'Free counselling' ? 'Book Free Counselling' : button ?? 'Check My Eligibility'}</>}
+      </button>
+    </form>
+  );
+}

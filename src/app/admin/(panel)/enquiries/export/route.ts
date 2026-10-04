@@ -1,7 +1,7 @@
 import { desc } from 'drizzle-orm';
 import { db, schema } from '@/db';
 import { getAdmin } from '@/lib/auth';
-import { leadWhere, statusLabel, type LeadFilters } from '@/admin/leads';
+import { TAB_KEYS, leadWhere, statusLabel, type LeadFilters } from '@/admin/leads';
 import { leadId } from '@/lib/format';
 
 const esc = (v: unknown) => {
@@ -27,7 +27,7 @@ export async function GET(req: Request) {
       ...extraKeys.map((k) => x[k]),
     ].map(esc).join(',');
   });
-  const tab = f.tab === 'franchise' || f.tab === 'career' ? f.tab : 'enquiries';
+  const tab = TAB_KEYS.includes(f.tab ?? '') ? f.tab! : 'enquiries';
   return new Response('﻿' + [head.join(','), ...lines].join('\n'), {
     headers: {
       'content-type': 'text/csv; charset=utf-8',

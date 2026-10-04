@@ -1,4 +1,5 @@
 'use client';
+import { BlocksEditor } from './BlocksEditor';
 import { startTransition, useActionState, useEffect, useRef, useState } from 'react';
 import { marked } from 'marked';
 import { Icon } from '@/components/Icon';
@@ -163,6 +164,7 @@ export function Field(p: FieldProps) {
   if (type === 'image') return <ImageField {...p} />;
   if (type === 'boolean') return <Switch {...p} />;
   if (type === 'markdown') return <MarkdownField {...p} />;
+  if (type === 'blocks') return <div className="a-field a-wide">{help && <small className="a-help">{help}</small>}<BlocksEditor name={name} value={value} /></div>;
   const str = value === null || value === undefined ? '' : String(value);
   let input: React.ReactNode;
   switch (type) {
@@ -245,7 +247,7 @@ function groupFields(fields: FieldProps[], isSettings = false) {
     else if (f.name.startsWith('seo') && !isSettings) g.seo.push(f);
     else if (f.type === 'image') g.media.push(f);
     else if (f.type === 'boolean' || f.name === 'sort' || f.type === 'date') g.publish.push(f);
-    else if (f.type === 'markdown') g.content.push(f);
+    else if (f.type === 'markdown' || f.type === 'blocks') g.content.push(f);
     else g.details.push(f);
   }
   return g;

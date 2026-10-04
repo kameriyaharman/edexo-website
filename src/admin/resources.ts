@@ -32,7 +32,7 @@ const seo: ResourceField[] = [
 const FAQ_HELP = 'Question on one line, answer on the next line(s). Leave an empty line between FAQs.';
 const pageKinds = [
   { value: 'page', label: 'Standard page' }, { value: 'service', label: 'Service / landing page' }, { value: 'exam', label: 'Exam preparation page' },
-  { value: 'city', label: 'City landing page' }, { value: 'legal', label: 'Legal page (no enquiry form)' }, { value: 'special', label: 'Franchise / Careers (has its own form)' },
+  { value: 'pathway', label: 'Section-based page (Ausbildung, Study in Germany…)' }, { value: 'city', label: 'City landing page' }, { value: 'legal', label: 'Legal page (no enquiry form)' }, { value: 'special', label: 'Franchise / Careers (has its own form)' },
 ];
 
 export const resources: Resource[] = [
@@ -141,7 +141,8 @@ export const resources: Resource[] = [
       { name: 'subtitle', label: 'Subtitle', type: 'textarea' },
       { name: 'kind', label: 'Page type', type: 'select', options: pageKinds },
       { name: 'groupName', label: 'Group', type: 'text', help: 'Exam pages: the language (German, English…) used to group them on the home page.' },
-      { name: 'content', label: 'Content', type: 'markdown' },
+      { name: 'content', label: 'Content (standard pages)', type: 'markdown' },
+      { name: 'sections', label: 'Page sections', type: 'blocks', help: 'Used when Page type is "Section-based page". Click a section to edit it; use ↑ ↓ to reorder.' },
       { name: 'highlightsTitle', label: 'Highlights heading', type: 'text', group: 'Highlights & disclaimer' },
       { name: 'highlights', label: 'Highlights (one per line)', type: 'lines', group: 'Highlights & disclaimer' },
       { name: 'disclaimer', label: 'Disclaimer (small note)', type: 'textarea', group: 'Highlights & disclaimer' },

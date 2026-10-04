@@ -2,7 +2,7 @@ import { cache } from 'react';
 import { eq } from 'drizzle-orm';
 import { db, schema } from '@/db';
 
-export type FieldType = 'text' | 'textarea' | 'lines' | 'markdown' | 'number' | 'boolean' | 'image' | 'select' | 'date' | 'url' | 'secret';
+export type FieldType = 'text' | 'textarea' | 'lines' | 'markdown' | 'number' | 'boolean' | 'image' | 'select' | 'date' | 'url' | 'secret' | 'blocks';
 
 export interface FieldDef {
   name: string;

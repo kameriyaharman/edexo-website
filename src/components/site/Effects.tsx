@@ -9,6 +9,7 @@ const REVEAL = [
   '.prose', '.contact-grid > *', '.course-aside', '.course-cover', '.tabs',
   '.program-card', '.why-item', '.rung', '.exam-group', '.format-card', '.abroad-card', '.faq', '.hl-item', '.level-card',
   '.fee-card', '.contact-opt', '.steps', '.fee-table-wrap', '.c-block',
+  '.pw-card', '.pw-steps li', '.pw-intake', '.pw-col', '.pw-note', '.pw-package', '.pw-path-step', '.pw-ticks li',
 ].join(',');
 
 /** Scroll-reveal, count-up numbers, header shadow and the custom cursor for the public site. */

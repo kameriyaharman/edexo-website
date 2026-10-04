@@ -431,6 +431,32 @@ async function upgrades() {
     }
   });
 
+  await apply('2026-10-germany-pages', async () => {
+    const { ausbildung, studyInGermany } = await import('../seed/content-v3.mjs');
+    await client.query('begin');
+    try {
+      for (const pg of [ausbildung, studyInGermany]) {
+        if (pg.oldSlug) await client.query('update pages set slug = $1 where slug = $2 and not exists (select 1 from pages where slug = $1)', [pg.slug, pg.oldSlug]);
+        const v = [pg.title, pg.subtitle, pg.kind, pg.groupName, pg.disclaimer, JSON.stringify(pg.sections), pg.seoTitle, pg.seoDescription, pg.sort];
+        const { rows: ex } = await client.query('select id from pages where slug = $1', [pg.slug]);
+        if (ex.length) {
+          await client.query(`update pages set title=$2, subtitle=$3, kind=$4, group_name=$5, disclaimer=$6, sections=$7::jsonb, seo_title=$8, seo_description=$9, sort=$10,
+            content='', highlights='', highlights_title='', faqs='', cta_title='', cta_text='', show_enquiry=false, published=true, updated_at=now() where id=$1`, [ex[0].id, ...v]);
+        } else {
+          await client.query(`insert into pages (slug, title, subtitle, kind, group_name, disclaimer, sections, seo_title, seo_description, sort, show_enquiry)
+            values ($1,$2,$3,$4,$5,$6,$7::jsonb,$8,$9,$10,false)`, [pg.slug, ...v]);
+        }
+        if (pg.oldSlug) {
+          await client.query('insert into redirects (from_path, to_path, permanent, sort) values ($1,$2,true,200) on conflict (from_path) do update set to_path = excluded.to_path', [`/${pg.oldSlug}`, `/${pg.slug}`]);
+          await client.query('update redirects set to_path = $1 where to_path = $2', [`/${pg.slug}`, `/${pg.oldSlug}`]);
+          await client.query('update menu_items set href = $1 where href = $2', [`/${pg.slug}`, `/${pg.oldSlug}`]);
+        }
+      }
+      await client.query("update menu_items set label = 'Ausbildung in Germany' where href = '/ausbildung-in-germany' and label = 'Ausbildung Germany'");
+      await client.query('commit');
+    } catch (e) { await client.query('rollback'); throw e; }
+  });
+
   data._upgrades = [...done];
   await client.query('update settings set data = $1, updated_at = now() where id = 1', [JSON.stringify(data)]);
 }

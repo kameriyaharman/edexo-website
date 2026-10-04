@@ -3,6 +3,7 @@ import { notFound, permanentRedirect, redirect } from 'next/navigation';
 import { getCourse, getPage, getProgram } from '@/lib/data';
 import { findRedirect, pageMeta } from '@/lib/seo';
 import { CoursePage, LandingPage, ProgramPage } from '@/components/site/Templates';
+import { PathwayPage } from '@/components/site/PathwayPage';
 
 type Props = { params: Promise<{ path: string[] }> };
 
@@ -43,7 +44,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function CatchAll({ params }: Props) {
   const r = await resolve(params);
-  if ('page' in r && r.page) return <LandingPage p={r.page} />;
+  if ('page' in r && r.page) return r.page.kind === 'pathway' ? <PathwayPage p={r.page} /> : <LandingPage p={r.page} />;
   if ('course' in r && r.course) return <CoursePage c={r.course} program={r.program ?? null} />;
   if ('program' in r && r.program) return <ProgramPage p={r.program} />;
   const red = await findRedirect('/' + r.parts.join('/'));

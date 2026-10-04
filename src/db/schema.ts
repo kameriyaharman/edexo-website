@@ -196,6 +196,8 @@ export const pages = pgTable('pages', {
   ctaText: text('cta_text').default(''),
   disclaimer: text('disclaimer').default(''),
   showEnquiry: boolean('show_enquiry').notNull().default(true),
+  /** structured page sections (kind = 'pathway'): see src/lib/blocks.ts */
+  sections: jsonb('sections').$type<unknown[]>().notNull().default([]),
   sort: integer('sort').notNull().default(0),
   published: boolean('published').notNull().default(true),
   seoTitle: text('seo_title').default(''),

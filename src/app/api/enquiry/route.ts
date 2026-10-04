@@ -3,8 +3,13 @@ import { db, schema } from '@/db';
 import { leadRef } from '@/lib/payments';
 import { clip, botCheck, rateLimited, spammyText, validEmail, validPhone } from '@/lib/spam';
 
-const TYPES = ['enquiry', 'demo', 'international', 'franchise'];
-const FRANCHISE_EXTRA = ['city', 'state', 'business', 'investment', 'location', 'experience'];
+const TYPES = ['enquiry', 'demo', 'international', 'franchise', 'ausbildung', 'study'];
+const EXTRA: Record<string, string[]> = {
+  franchise: ['city', 'state', 'business', 'investment', 'location', 'experience'],
+  ausbildung: ['intent', 'age', 'qualification', 'experience', 'field', 'city'],
+  study: ['intent', 'qualification', 'score', 'year', 'intake', 'degree', 'langLevels', 'preference', 'budget'],
+};
+const COUNSELLING = ['franchise', 'ausbildung', 'study'];
 
 export async function POST(req: Request) {
   if (rateLimited(req, 'enquiry')) return NextResponse.json({ error: 'Too many requests. Please call or WhatsApp us instead.' }, { status: 429 });
@@ -29,9 +34,9 @@ export async function POST(req: Request) {
   if (spammyText(message)) return NextResponse.json({ ok: true });
 
   const country = get('country', 80);
-  if (type !== 'franchise' && country && country !== 'India') type = 'international';
+  if (!COUNSELLING.includes(type) && country && country !== 'India') type = 'international';
   const extra: Record<string, string> = {};
-  if (type === 'franchise') for (const k of FRANCHISE_EXTRA) { const v = get(k, 300); if (v) extra[k] = v; }
+  for (const k of EXTRA[type] ?? []) { const v = get(k, 300); if (v) extra[k] = v; }
 
   const [row] = await db.insert(schema.enquiries).values({
     type: type === 'demo' ? 'enquiry' : type, name, phone, email, country, message,
@@ -42,5 +47,5 @@ export async function POST(req: Request) {
     notes: bot === 'flag' ? 'Possible spam: the hidden anti-spam field was filled (can also be browser AutoFill).' : '',
   }).returning({ id: schema.enquiries.id });
   // demo / course / international enquiries continue to the Thank-you (and Pay Now) page
-  return NextResponse.json({ ok: true, ...(type !== 'franchise' ? { next: `/thank-you/${leadRef(row.id)}` } : {}) });
+  return NextResponse.json({ ok: true, ...(!COUNSELLING.includes(type) ? { next: `/thank-you/${leadRef(row.id)}` } : {}) });
 }

@@ -167,7 +167,7 @@ export async function ClassesSection() {
 }
 
 export async function AbroadSection() {
-  const [st, pages] = await Promise.all([getSettings(), Promise.all(['study-in-germany', 'ausbildung-germany', 'german-for-work'].map(getPage))]);
+  const [st, pages] = await Promise.all([getSettings(), Promise.all(['study-in-germany', 'ausbildung-in-germany', 'german-for-work'].map(getPage))]);
   const items = pages.filter(Boolean) as NonNullable<(typeof pages)[number]>[];
   if (!items.length) return null;
   const icons = ['cap', 'briefcase', 'office'];

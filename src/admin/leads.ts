@@ -11,7 +11,8 @@ export const STATUS_KEYS: string[] = STATUSES.map(([k]) => k);
 export const statusLabel = (k: string) => STATUSES.find(([v]) => v === k)?.[1] ?? k;
 
 export const LEAD_TABS = [
-  ['leads', 'Enquiries', 'contact'], ['franchise', 'Franchise', 'handshake'], ['career', 'Job applications', 'briefcase'],
+  ['leads', 'Enquiries', 'contact'], ['ausbildung', 'Ausbildung', 'briefcase'], ['study', 'Study in Germany', 'cap'],
+  ['franchise', 'Franchise', 'handshake'], ['career', 'Job applications', 'file'],
 ] as const;
 
 export type LeadFilters = {
@@ -20,10 +21,11 @@ export type LeadFilters = {
 };
 
 const e = schema.enquiries;
+export const TAB_KEYS = ['franchise', 'career', 'ausbildung', 'study'];
 
 /** Same filters for the list page and the CSV export. */
 export function leadWhere(f: LeadFilters): SQL | undefined {
-  const tab = f.tab === 'franchise' || f.tab === 'career' ? f.tab : 'leads';
+  const tab = TAB_KEYS.includes(f.tab ?? '') ? f.tab! : 'leads';
   const parts: (SQL | undefined)[] = [
     tab === 'leads' ? or(eq(e.type, 'enquiry'), eq(e.type, 'international')) : eq(e.type, tab),
     f.type && tab === 'leads' && ['enquiry', 'international'].includes(f.type) ? eq(e.type, f.type) : undefined,

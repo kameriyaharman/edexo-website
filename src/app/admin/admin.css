@@ -273,3 +273,25 @@ details[open] .a-panel-caret { transform: rotate(180deg); }
 .a-extra dt { font-size: 11.5px; color: var(--a-muted); font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
 .a-extra dd { margin: 0; color: var(--a-text); overflow-wrap: anywhere; }
 .meta-line.muted { color: var(--a-muted); font-size: 13px; }
+
+/* ---------- page sections editor ---------- */
+.a-blocks { display: grid; gap: 10px; }
+.a-block { border: 1.5px solid var(--a-line); border-radius: 14px; background: #fff; overflow: hidden; }
+.a-block.open { border-color: #FFC9A8; box-shadow: 0 8px 24px rgba(238,90,15,.08); }
+.a-block.is-hidden { opacity: .6; }
+.a-block-head { display: flex; align-items: center; gap: 8px; padding: 8px 10px 8px 6px; background: var(--a-soft); }
+.a-block-title { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; background: none; border: 0; cursor: pointer; text-align: left; padding: 6px; color: var(--a-text); font: inherit; }
+.a-block-title strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--navy-dark); }
+.a-block-n { width: 26px; height: 26px; border-radius: 8px; background: var(--a-grad-navy); color: #fff; font-size: 12px; font-weight: 800; display: inline-flex; align-items: center; justify-content: center; flex: none; }
+.a-block-type { font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: #B5440B; background: #FFE9DA; padding: 3px 8px; border-radius: 6px; white-space: nowrap; flex: none; }
+.a-block-actions { display: flex; gap: 4px; flex: none; }
+.a-block-actions .a-btn { padding: 6px 10px; }
+.a-block-body { padding: 16px; display: grid; gap: 12px; border-top: 1px solid var(--a-line); }
+.a-block-body .a-fields { grid-template-columns: 1fr 1fr; }
+.a-block-body .a-field:has(textarea) { grid-column: 1 / -1; }
+.a-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; align-items: start; }
+.a-col { border: 1px dashed var(--a-line); border-radius: 12px; padding: 12px; display: grid; gap: 10px; }
+.a-col-head { display: flex; justify-content: space-between; align-items: center; }
+.a-block-add { display: flex; gap: 8px; align-items: center; padding: 10px; border: 1.5px dashed #CDD3E4; border-radius: 14px; }
+.a-block-add .a-input-wrap { flex: 1; }
+@media (max-width: 700px) { .a-block-body .a-fields { grid-template-columns: 1fr; } .a-block-type { display: none; } }

@@ -3,7 +3,7 @@ import { and, count, desc, eq, inArray } from 'drizzle-orm';
 import { db, schema } from '@/db';
 import { deleteEnquiry, updateEnquiry } from '@/admin/actions';
 import { ConfirmButton } from '@/admin/Fields';
-import { LEAD_TABS, STATUSES, leadWhere, statusLabel, type LeadFilters } from '@/admin/leads';
+import { LEAD_TABS, TAB_KEYS, STATUSES, leadWhere, statusLabel, type LeadFilters } from '@/admin/leads';
 import { inr, leadId } from '@/lib/format';
 import { Icon } from '@/components/Icon';
 
@@ -13,12 +13,14 @@ const FILTER_KEYS = ['tab', 'status', 'q', 'from', 'to', 'country', 'language', 
 const EXTRA_LABELS: Record<string, string> = {
   city: 'City', state: 'State', business: 'Current business', investment: 'Investment capacity', location: 'Preferred location',
   experience: 'Experience', position: 'Position', qualification: 'Qualification', linkedin: 'LinkedIn',
+  intent: 'Wants', age: 'Age', field: 'Preferred field', score: '% / CGPA', year: 'Passing year', intake: 'Intake', degree: 'Degree',
+  langLevels: 'Language levels', preference: 'University preference', budget: 'Budget',
 };
 
 export default async function Enquiries({ searchParams }: { searchParams: Promise<LeadFilters & { page?: string }> }) {
   const sp = await searchParams;
   const f: LeadFilters = Object.fromEntries(FILTER_KEYS.map((k) => [k, (sp[k] ?? '').trim()]).filter(([, v]) => v));
-  const tab = f.tab === 'franchise' || f.tab === 'career' ? f.tab : 'leads';
+  const tab = TAB_KEYS.includes(f.tab ?? '') ? f.tab! : 'leads';
   const page = Math.max(1, Number(sp.page) || 1);
   const e = schema.enquiries;
   const where = leadWhere(f);

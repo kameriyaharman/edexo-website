@@ -1,0 +1,1 @@
+ALTER TABLE "pages" ADD COLUMN "sections" jsonb DEFAULT '[]'::jsonb NOT NULL;
