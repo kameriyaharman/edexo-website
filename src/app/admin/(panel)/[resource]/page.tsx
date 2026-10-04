@@ -8,7 +8,7 @@ import { formatDate, inr } from '@/lib/format';
 import { Icon } from '@/components/Icon';
 import { iconForAdminPath } from '@/admin/nav';
 
-type Props = { params: Promise<{ resource: string }>; searchParams: Promise<{ deleted?: string; location?: string; q?: string }> };
+type Props = { params: Promise<{ resource: string }>; searchParams: Promise<{ deleted?: string; location?: string; q?: string; program?: string }> };
 
 export async function generateMetadata({ params }: Props) {
   return { title: getResource((await params).resource)?.label ?? 'Admin' };
@@ -22,23 +22,35 @@ export default async function ResourceList({ params, searchParams }: Props) {
   const order = res.orderBy === 'sort' ? [asc(t.sort), asc(t.id)] : res.orderBy === 'publishedAt' ? [desc(t.publishedAt), desc(t.id)] : [asc(t.id)];
   let rows: any[] = await db.select().from(t).orderBy(...order);
   if (res.key === 'menu' && sp.location) rows = rows.filter((r) => r.location === sp.location);
+  if (res.key === 'menu') {
+    // children directly under their parent
+    const top = rows.filter((r) => !r.parentId || !rows.some((p) => p.id === r.parentId));
+    rows = top.flatMap((p) => [p, ...rows.filter((c) => c.parentId === p.id)]);
+  }
   const total = rows.length;
   const q = (sp.q ?? '').trim().toLowerCase();
   if (q) rows = rows.filter((r) => res.fields.some((f) => ['text', 'textarea'].includes(f.type) && String(r[f.name] ?? '').toLowerCase().includes(q)));
   const icon = iconForAdminPath(`/admin/${res.key}`);
-  const langs = res.key === 'courses' ? Object.fromEntries((await db.select().from(schema.languages)).map((l) => [l.id, l.name])) : {};
+  const langs = ['courses', 'posts'].includes(res.key) ? Object.fromEntries((await db.select().from(schema.languages)).map((l) => [l.id, l.name])) : {};
+  const menuLabels = res.key === 'menu' ? Object.fromEntries((await db.select().from(schema.menuItems)).map((m) => [m.id, m.label])) : {};
+  const langFilter = sp.program;
+  if (res.key === 'courses' && langFilter) rows = rows.filter((r) => String(r.languageId) === langFilter);
   const labelOf = (name: string) => res.fields.find((f) => f.name === name)?.label.replace(/\s*\(.*\)$/, '') ?? name;
 
   function cell(r: any, col: string) {
     const f = res!.fields.find((x) => x.name === col);
     const v = r[col];
     if (f?.type === 'image') return v ? <img className="thumb" src={`/media/${v}`} alt="" /> : <span className="thumb" />;
+    if (col === 'showOnHome') return v ? <span className="pill-s on">Home</span> : '—';
+    if (col === 'parentId') return v ? <span className="muted">↳ {menuLabels[v] ?? '—'}</span> : '—';
+    if (col === 'priceOffline') return v === null ? '—' : inr(v);
+    if (col === 'kind') return <span className="pill-s">{String(v)}</span>;
     if (col === 'active' || col === 'published' || col === 'featured') {
       if (col === 'featured') return v ? 'Yes' : '—';
       return (
         <form action={toggleActive}>
           <input type="hidden" name="__resource" value={res!.key} /><input type="hidden" name="__id" value={r.id} /><input type="hidden" name="__col" value={col} />
-          <button className={`pill-s ${v ? 'on' : 'off'}`} type="submit" title="Click to toggle">{v ? (col === 'active' ? 'Active' : 'Published') : 'Hidden'}</button>
+          <button className={`pill-s ${v ? 'on' : 'off'}`} type="submit" title="Click to toggle">{v ? (col === 'active' ? (res!.key === 'jobs' ? 'Open' : 'Active') : 'Published') : 'Hidden'}</button>
         </form>
       );
     }
@@ -66,9 +78,15 @@ export default async function ResourceList({ params, searchParams }: Props) {
       </form>
       {res.key === 'menu' && (
         <div className="a-tabs">
-          {[['', 'All'], ['header', 'Header'], ['footer_useful', 'Footer column 1'], ['footer_courses', 'Footer column 2']].map(([v, l]) => (
+          {[['', 'All'], ['header', 'Header'], ['footer_useful', 'Quick Links'], ['footer_courses', 'Popular Programs'], ['footer_support', 'Support']].map(([v, l]) => (
             <Link key={v} href={v ? `/admin/menu?location=${v}` : '/admin/menu'} aria-current={(sp.location ?? '') === v ? 'page' : undefined}>{l}</Link>
           ))}
+        </div>
+      )}
+      {res.key === 'courses' && (
+        <div className="a-tabs">
+          <Link href="/admin/courses" aria-current={!sp.program ? 'page' : undefined}>All</Link>
+          {Object.entries(langs).map(([id, name]) => <Link key={id} href={`/admin/courses?program=${id}`} aria-current={sp.program === id ? 'page' : undefined}>{name}</Link>)}
         </div>
       )}
       {rows.length ? (

@@ -1,5 +1,6 @@
 import Link from 'next/link';
-import { count, desc, eq, gte } from 'drizzle-orm';
+import { and, count, desc, eq, gte, or } from 'drizzle-orm';
+import { statusLabel } from '@/admin/leads';
 import { db, schema } from '@/db';
 import { requireAdmin } from '@/lib/auth';
 import { Icon } from '@/components/Icon';
@@ -16,21 +17,23 @@ export default async function Dashboard() {
   const me = await requireAdmin();
   const since = new Date(Date.now() - 7 * 86400_000);
   const c = async (table: any, where?: any) => Number((await (where ? db.select({ n: count() }).from(table).where(where) : db.select({ n: count() }).from(table)))[0].n);
-  const [newEnq, weekEnq, courses, posts, testimonials, pages] = await Promise.all([
-    c(schema.enquiries, eq(schema.enquiries.status, 'new')),
+  const [newEnq, weekEnq, courses, programs, newFr, newJobs] = await Promise.all([
+    c(schema.enquiries, and(eq(schema.enquiries.status, 'new'), or(eq(schema.enquiries.type, 'enquiry'), eq(schema.enquiries.type, 'international')))),
     c(schema.enquiries, gte(schema.enquiries.createdAt, since)),
-    c(schema.courses), c(schema.posts), c(schema.testimonials), c(schema.pages),
+    c(schema.courses), c(schema.languages),
+    c(schema.enquiries, and(eq(schema.enquiries.status, 'new'), eq(schema.enquiries.type, 'franchise'))),
+    c(schema.enquiries, and(eq(schema.enquiries.status, 'new'), eq(schema.enquiries.type, 'career'))),
   ]);
   const recent = await db.select().from(schema.enquiries).orderBy(desc(schema.enquiries.createdAt)).limit(6);
   const hour = Number(new Date().toLocaleString('en-IN', { hour: 'numeric', hour12: false, timeZone: 'Asia/Kolkata' }));
   const greet = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
   const stats: [string, number, string, string, string][] = [
     ['/admin/enquiries?status=new', newEnq, 'New enquiries', 'contact', 'orange'],
-    ['/admin/enquiries', weekEnq, 'Enquiries this week', 'calendar', 'navy'],
-    ['/admin/courses', courses, 'Courses', 'cap', 'green'],
-    ['/admin/posts', posts, 'Blog posts', 'news', 'blue'],
-    ['/admin/testimonials', testimonials, 'Testimonials', 'quote', 'amber'],
-    ['/admin/pages', pages, 'Pages', 'notebook', 'pink'],
+    ['/admin/enquiries', weekEnq, 'Leads this week', 'calendar', 'navy'],
+    ['/admin/enquiries?tab=franchise&status=new', newFr, 'New franchise enquiries', 'handshake', 'amber'],
+    ['/admin/enquiries?tab=career&status=new', newJobs, 'New job applications', 'briefcase', 'pink'],
+    ['/admin/languages', programs, 'Programs', 'languages', 'green'],
+    ['/admin/courses', courses, 'Courses & fees', 'wallet', 'blue'],
   ];
   return (
     <>
@@ -55,7 +58,7 @@ export default async function Dashboard() {
       <div className="a-two">
         <div className="a-card">
           <h2><Icon name="contact" size={18} />Latest enquiries</h2>
-          <p className="sub">Free demo, contact page and call-back submissions.</p>
+          <p className="sub">Demo bookings, enquiries, franchise enquiries and job applications.</p>
           {recent.length ? (
             <div className="a-table-wrap" style={{ border: 0 }}>
               <table className="a-table" style={{ minWidth: 520 }}>
@@ -65,7 +68,7 @@ export default async function Dashboard() {
                     <tr key={e.id}>
                       <td className="title">{e.name}<div className="muted">{e.createdAt.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'medium', timeStyle: 'short' })}</div></td>
                       <td><a href={`tel:${e.phone}`}>{e.phone}</a></td><td>{e.course}</td>
-                      <td><span className={`pill-s st-${e.status}`}>{e.status}</span></td>
+                      <td><span className={`pill-s st-${e.status}`}>{statusLabel(e.status)}</span></td>
                     </tr>
                   ))}
                 </tbody>

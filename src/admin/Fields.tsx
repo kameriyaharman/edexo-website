@@ -222,10 +222,21 @@ function Card({ title, icon, children, collapsible, defaultOpen = true }: { titl
   );
 }
 
+function groupIcon(title: string) {
+  const t = title.toLowerCase();
+  if (/fee|price/.test(t)) return 'wallet';
+  if (/faq/.test(t)) return 'help';
+  if (/home/.test(t)) return 'home';
+  if (/syllabus|course page|learn/.test(t)) return 'book';
+  if (/highlight|cta|call/.test(t)) return 'sparkles';
+  return 'layers';
+}
+
 function groupFields(fields: FieldProps[], isSettings = false) {
-  const g = { details: [] as FieldProps[], content: [] as FieldProps[], media: [] as FieldProps[], publish: [] as FieldProps[], seo: [] as FieldProps[] };
+  const g = { details: [] as FieldProps[], content: [] as FieldProps[], media: [] as FieldProps[], publish: [] as FieldProps[], seo: [] as FieldProps[], extra: new Map<string, FieldProps[]>() };
   for (const f of fields) {
-    if (f.name.startsWith('seo') && !isSettings) g.seo.push(f);
+    if (f.group && !isSettings) { if (!g.extra.has(f.group)) g.extra.set(f.group, []); g.extra.get(f.group)!.push(f); }
+    else if (f.name.startsWith('seo') && !isSettings) g.seo.push(f);
     else if (f.type === 'image') g.media.push(f);
     else if (f.type === 'boolean' || f.name === 'sort' || f.type === 'date') g.publish.push(f);
     else if (f.type === 'markdown') g.content.push(f);
@@ -267,6 +278,7 @@ export function AdminForm({ action, fields, hidden, submitLabel = 'Save', savedN
     <>
       {g.details.length > 0 && <Card title="Details" icon="pen">{grid(g.details)}</Card>}
       {g.content.length > 0 && <Card title="Content" icon="notebook">{grid(g.content)}</Card>}
+      {[...g.extra.entries()].map(([title, list]) => <Card key={title} title={title} icon={groupIcon(title)}>{grid(list)}</Card>)}
       {layout === 'single' && g.media.length > 0 && <Card title="Images" icon="sparkles">{grid(g.media)}</Card>}
       {layout === 'single' && g.publish.length > 0 && <Card title="Options" icon="layers">{grid(g.publish)}</Card>}
       {g.seo.length > 0 && <Card title="Search engine (SEO)" icon="search" collapsible defaultOpen={layout === 'single'}>{grid(g.seo)}</Card>}

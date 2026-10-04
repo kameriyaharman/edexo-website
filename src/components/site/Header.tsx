@@ -1,20 +1,20 @@
 import Link from 'next/link';
 import { getSettings, s, lines, imageId } from '@/lib/settings';
-import { getMenu } from '@/lib/data';
+import { getMenuTree } from '@/lib/data';
 import { mediaUrl } from '@/lib/format';
-import { Icon, iconFor } from '@/components/Icon';
-import { NavLinks } from './NavLinks';
+import { Icon } from '@/components/Icon';
+import { MobileNav, NavLinks } from './NavLinks';
 
 export async function Header() {
   const st = await getSettings();
-  const menu = await getMenu('header');
+  const menu = await getMenuTree('header');
   const logo = mediaUrl(imageId(st, 'logoId'));
   const socials = [
     ['Facebook', s(st, 'facebook'), 'facebook'], ['Instagram', s(st, 'instagram'), 'instagram'],
     ['YouTube', s(st, 'youtube'), 'youtube'], ['LinkedIn', s(st, 'linkedin'), 'linkedin'],
   ].filter(([, u]) => u);
   const wa = s(st, 'whatsapp').replace(/\D/g, '');
-  const items = menu.map((m) => ({ label: m.label, href: m.href }));
+  const items = menu.map((m) => ({ label: m.label, href: m.href, children: m.children.map((c) => ({ label: c.label, href: c.href, description: c.description })) }));
   const signIn = s(st, 'signInHref');
   const cta = s(st, 'headerCtaLabel');
 
@@ -45,11 +45,11 @@ export async function Header() {
           <NavLinks items={items} />
           <div className="header-actions">
             {signIn && <a className="signin" href={signIn}>{s(st, 'signInLabel', 'Sign In')}</a>}
-            {cta && <Link className="btn btn-orange btn-sm" href={s(st, 'headerCtaHref', '/#enroll')}><Icon name="cap" size={17} />{cta}</Link>}
+            {cta && <Link className="btn btn-orange btn-sm" data-cta="header_demo" href={s(st, 'headerCtaHref', '/#enroll')}><Icon name="video" size={17} />{cta}</Link>}
             <details className="mobile-menu">
               <summary aria-label="Open menu"><Icon name="menu" size={22} /></summary>
               <nav className="panel" aria-label="Mobile">
-                {items.map((m) => <Link key={m.href + m.label} href={m.href}><Icon name={iconFor(m.label)} size={18} />{m.label}</Link>)}
+                <MobileNav items={items} />
                 {signIn && <a href={signIn}>{s(st, 'signInLabel', 'Sign In')}</a>}
               </nav>
             </details>

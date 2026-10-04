@@ -44,3 +44,47 @@ export const getPost = cache(async (slug: string) =>
 
 export const getPage = cache(async (slug: string) =>
   (await db.select().from(t.pages).where(and(eq(t.pages.slug, slug), eq(t.pages.published, true))).limit(1))[0] ?? null);
+
+/* ---------- programs, menus, FAQs, jobs (international platform) ---------- */
+export type Program = typeof t.languages.$inferSelect & { courses: CourseRow[] };
+export type MenuNode = typeof t.menuItems.$inferSelect & { children: (typeof t.menuItems.$inferSelect)[] };
+
+/** Menu with one level of children (dropdowns). Children of hidden parents are dropped. */
+export const getMenuTree = cache(async (location: string): Promise<MenuNode[]> => {
+  const rows = await getMenu(location);
+  const top = rows.filter((r) => !r.parentId);
+  return top.map((p) => ({ ...p, children: rows.filter((r) => r.parentId === p.id) }));
+});
+
+export const getPrograms = cache(async (): Promise<Program[]> => {
+  const [langs, courses] = await Promise.all([getLanguages(), getCourses()]);
+  return langs.map((l) => ({ ...l, courses: courses.filter((c) => c.languageId === l.id) }));
+});
+
+export const getProgram = cache(async (slug: string) => (await getPrograms()).find((p) => p.slug === slug) ?? null);
+
+export const getFaqs = cache(async () => activeSorted(await db.select().from(t.faqs)));
+export const getTrainers = cache(async () => activeSorted(await db.select().from(t.trainers)));
+export const getJobs = cache(async () => activeSorted(await db.select().from(t.jobs)));
+
+export const getPagesByKind = cache(async (kind: string) =>
+  (await db.select().from(t.pages).where(and(eq(t.pages.kind, kind), eq(t.pages.published, true))))
+    .sort((a, b) => a.sort - b.sort || a.id - b.id));
+
+/** Lowest fee across a program's levels, for "from ₹…" labels. */
+export function fromPrice(p: Program): number | null {
+  const all = p.courses.flatMap((c) => [c.price, c.priceOffline]).filter((n): n is number => typeof n === 'number' && n > 0);
+  return all.length ? Math.min(...all) : null;
+}
+
+/** Parse "Question\nAnswer…\n\nQuestion\nAnswer" blocks used by FAQ text fields. */
+export function parseFaqs(text: string | null | undefined): { q: string; a: string }[] {
+  return (text ?? '').split(/\n\s*\n/).map((b) => b.trim()).filter(Boolean).map((b) => {
+    const [q, ...rest] = b.split('\n');
+    return { q: q.replace(/^Q[:.]\s*/i, '').trim(), a: rest.join('\n').replace(/^A[:.]\s*/i, '').trim() };
+  }).filter((f) => f.q && f.a);
+}
+
+export function readingTime(md: string | null | undefined): number {
+  return Math.max(1, Math.round((md ?? '').split(/\s+/).filter(Boolean).length / 200));
+}

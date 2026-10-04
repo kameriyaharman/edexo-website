@@ -10,6 +10,7 @@ import { settingsGroups, type FieldDef } from '@/lib/settings';
 import { slugify } from '@/lib/format';
 import { getResource } from './resources';
 import { saveUpload } from './media';
+import { STATUS_KEYS } from './leads';
 
 export type FormState = { error?: string; ok?: string } | undefined;
 
@@ -114,7 +115,13 @@ export async function saveRecord(_: FormState, fd: FormData): Promise<FormState>
       for (let i = 2; ; i++) {
         const clash = await db.select({ id: res.table.id }).from(res.table)
           .where(id ? and(eq(res.table.slug, slug), ne(res.table.id, id)) : eq(res.table.slug, slug)).limit(1);
-        if (!clash.length) break;
+        // pages, programs and courses share the top-level URL space (/slug)
+        const shared = ['pages', 'languages', 'courses'].includes(res.key)
+          ? await Promise.all([schema.pages, schema.languages, schema.courses].filter((t) => t !== res.table)
+            .map((t) => db.select({ id: t.id }).from(t).where(eq(t.slug, slug)).limit(1)))
+          : [];
+        const reserved = ['admin', 'api', 'media', 'blog', 'courses', 'contact', 'about', 'faqs'].includes(slug) && !(res.key === 'pages' && slug === 'about');
+        if (!clash.length && !shared.some((r) => r.length) && !reserved) break;
         slug = `${base}-${i}`;
       }
       values.slug = slug;
@@ -126,6 +133,7 @@ export async function saveRecord(_: FormState, fd: FormData): Promise<FormState>
       values.toPath = norm(values.toPath);
       if (values.fromPath === values.toPath) throw new Error('Old and new URL are the same');
     }
+    if (res.key === 'menu' && values.parentId && Number(values.parentId) === id) values.parentId = null;
     if ('rating' in values) values.rating = Math.min(5, Math.max(1, Number(values.rating) || 5));
     if (id) {
       await db.update(res.table).set({ ...values, updatedAt: new Date() }).where(eq(res.table.id, id));
@@ -171,7 +179,7 @@ export async function updateEnquiry(fd: FormData) {
   await requireAdmin();
   const id = Number(fd.get('id'));
   const status = String(fd.get('status') ?? 'new');
-  if (!id || !['new', 'contacted', 'enrolled', 'closed'].includes(status)) return;
+  if (!id || !STATUS_KEYS.includes(status)) return;
   await db.update(schema.enquiries).set({ status, notes: String(fd.get('notes') ?? '').slice(0, 4000), updatedAt: new Date() })
     .where(eq(schema.enquiries.id, id));
   revalidatePath('/admin/enquiries');
@@ -180,7 +188,10 @@ export async function updateEnquiry(fd: FormData) {
 export async function deleteEnquiry(fd: FormData) {
   await requireAdmin();
   const id = Number(fd.get('id'));
-  if (id) await db.delete(schema.enquiries).where(eq(schema.enquiries.id, id));
+  if (id) {
+    const [row] = await db.delete(schema.enquiries).where(eq(schema.enquiries.id, id)).returning({ fileId: schema.enquiries.fileId });
+    if (row?.fileId) await db.delete(schema.files).where(eq(schema.files.id, row.fileId));
+  }
   revalidatePath('/admin/enquiries');
 }
 

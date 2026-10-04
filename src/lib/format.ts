@@ -30,3 +30,14 @@ export function splitLines(v: string | null | undefined): string[] {
 export function telHref(phone: string): string {
   return 'tel:' + phone.replace(/[^\d+]/g, '');
 }
+
+export function waHref(number: string | null | undefined, text?: string): string {
+  const n = (number ?? '').replace(/\D/g, '');
+  if (!n) return '';
+  return `https://wa.me/${n}${text ? `?text=${encodeURIComponent(text)}` : ''}`;
+}
+
+/** Public lead reference shown to admins and in CSV exports, e.g. EDX-000123. */
+export function leadId(id: number): string {
+  return `EDX-${String(id).padStart(6, '0')}`;
+}

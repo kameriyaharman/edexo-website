@@ -3,6 +3,7 @@ import { getSettings, s, imageId } from '@/lib/settings';
 import { canIndex } from '@/lib/seo';
 import { mediaUrl } from '@/lib/format';
 import './globals.css';
+import './platform.css';
 
 export const dynamic = 'force-dynamic';
 

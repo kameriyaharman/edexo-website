@@ -6,7 +6,7 @@ import { Icon } from '@/components/Icon';
 
 export async function Footer() {
   const st = await getSettings();
-  const [useful, courses, branches] = await Promise.all([getMenu('footer_useful'), getMenu('footer_courses'), getBranches()]);
+  const [useful, courses, support, branches] = await Promise.all([getMenu('footer_useful'), getMenu('footer_courses'), getMenu('footer_support'), getBranches()]);
   const logo = mediaUrl(imageId(st, 'logoWhiteId'));
   const wa = s(st, 'whatsapp').replace(/\D/g, '');
   const socials = [
@@ -17,7 +17,7 @@ export async function Footer() {
   return (
     <footer className="footer">
       <div className="footer-glow" aria-hidden="true" />
-      <div className="wrap footer-grid">
+      <div className={`wrap footer-grid${support.length ? ' five' : ''}`}>
         <div>
           <Link href="/" className="logo">{logo ? <img src={logo} alt={s(st, 'siteName', 'Edexo')} /> : <strong style={{ color: '#fff', fontSize: 24 }}>{s(st, 'siteName')}</strong>}</Link>
           <p className="about">{s(st, 'footerAbout')}</p>
@@ -31,8 +31,15 @@ export async function Footer() {
           <h4>{s(st, 'footerCoursesTitle', 'Courses')}</h4>
           {courses.map((m) => <Link key={m.id} href={m.href}><Icon name="chevronRight" size={14} />{m.label}</Link>)}
         </div>
+        {support.length > 0 && (
+          <div className="col">
+            <h4>{s(st, 'footerSupportTitle', 'Support')}</h4>
+            {support.map((m) => <Link key={m.id} href={m.href}><Icon name="chevronRight" size={14} />{m.label}</Link>)}
+          </div>
+        )}
         <div className="col">
           <h4>{s(st, 'footerLocationsTitle', 'Our Centres')}</h4>
+          {s(st, 'email') && <a className="f-phone" href={`mailto:${s(st, 'email')}`} style={{ marginBottom: 14 }}><Icon name="mail" size={13} />{s(st, 'email')}</a>}
           {branches.map((b) => {
             const phone = splitLines(b.phones)[0];
             const map = b.mapUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`Edexo ${b.address}`)}`;
@@ -43,6 +50,7 @@ export async function Footer() {
                   <strong>{b.name}</strong>
                   <a href={map} target="_blank" rel="noopener noreferrer" className="f-addr">{b.address}</a>
                   {phone && <a href={telHref(phone)} className="f-phone"><Icon name="phone" size={13} />{phone}</a>}
+                  {b.hours && <span className="f-hours"><Icon name="clock" size={13} />{b.hours.split('\n')[0]}</span>}
                 </div>
               </div>
             );

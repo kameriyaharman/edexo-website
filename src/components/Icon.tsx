@@ -4,6 +4,7 @@ import {
   Sparkles, Heart, Lightbulb, Video, Headphones, FileCheck, BadgeCheck, School, Library, PenTool, Mic, Clock3,
   Rocket, ShieldCheck, Wallet, Gift, Quote, Send, Navigation, Building2, CircleCheck, ChevronDown, Search,
   Home, Info, Newspaper, Contact, Layers, Zap, BookMarked, NotebookPen, Medal, Smile, ThumbsUp, Monitor,
+  ListChecks, Handshake, FileText, Upload, Filter, Download, Flag, ExternalLink, Baby, Building, HelpCircle, Plus, Minus,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -21,6 +22,8 @@ const lucide: Record<string, LucideIcon> = {
   check: Check, checkCircle: CircleCheck, arrowRight: ArrowRight, chevronLeft: ChevronLeft, chevronRight: ChevronRight,
   chevronDown: ChevronDown, phone: Phone, mail: Mail, menu: Menu, close: X, star: Star, chat: MessageCircle,
   quote: Quote, send: Send, search: Search, home: Home, info: Info, news: Newspaper, contact: Contact,
+  listChecks: ListChecks, handshake: Handshake, file: FileText, upload: Upload, filter: Filter, download: Download,
+  flag: Flag, external: ExternalLink, kids: Baby, office: Building, help: HelpCircle, plus: Plus, minus: Minus,
 };
 
 /* Brand marks drawn as simple glyphs (lucide no longer ships brand icons). */
@@ -72,8 +75,12 @@ export function IconBubble({ icon, tone = 'orange', size = 52, iconSize = 22 }: 
 export function iconFor(label: string): string {
   const l = label.toLowerCase();
   const rules: [RegExp, string][] = [
-    [/home/, 'home'], [/about/, 'info'], [/course|level|a1|b1|c1|c2/, 'cap'], [/german|french|italian|japanese|language/, 'languages'],
-    [/blog|article|news/, 'news'], [/contact|call/, 'phone'], [/privacy|terms|policy/, 'shield'],
+    [/home/, 'home'], [/about/, 'info'], [/faq/, 'help'], [/franchise/, 'handshake'], [/kids/, 'kids'], [/corporate|business/, 'office'],
+    [/one-to-one|personal/, 'user'], [/group|together/, 'users'], [/international|anywhere|world/, 'globe'], [/online/, 'laptop'],
+    [/goethe|telc|ösd|osd|testdaf|ielts|pte|toefl|delf|dalf|tcf|dele|siele|jlpt|hsk|topik|mock/, 'target'],
+    [/ausbildung/, 'briefcase'], [/fee|price/, 'wallet'],
+    [/course|level|a1|b1|c1|c2/, 'cap'], [/german|french|italian|japanese|spanish|chinese|arabic|portuguese|korean|russian|english|language/, 'languages'],
+    [/blog|article|news/, 'news'], [/contact|call/, 'phone'], [/privacy|terms|policy|disclaimer|cookie|refund/, 'shield'],
     [/demo/, 'video'], [/certif/, 'award'], [/trainer|teacher|expert/, 'users'], [/exam|test/, 'target'],
     [/online|offline/, 'laptop'], [/material|book/, 'book'], [/batch|schedule|time/, 'calendar'], [/visa|abroad|germany|travel/, 'plane'],
     [/job|career|work/, 'briefcase'], [/universit|study/, 'cap'], [/mumbai|pune|jaipur|delhi|rohini|dwarka|centre|center/, 'pin'],

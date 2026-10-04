@@ -300,6 +300,137 @@ async function upgrades() {
     }
   });
 
+  await apply('2026-10-content-v2', async (d) => {
+    const C = await import('../seed/content-v2.mjs');
+    await client.query('begin');
+    try {
+      for (const [k, v] of Object.entries(C.settings)) d[k] = v;
+      d.footerUsefulTitle = C.settings.footerUsefulTitle;
+
+      const mediaOf = async (sql, args) => (await client.query(sql, args)).rows[0]?.image_id ?? null;
+      const slugMap = {}; // old course slug -> new
+      const pageCols = ['title', 'subtitle', 'kind', 'group_name', 'content', 'highlights_title', 'highlights', 'faqs', 'cta_title', 'cta_text', 'disclaimer', 'show_enquiry', 'sort', 'seo_title', 'seo_description'];
+
+      // programs + courses
+      for (const p of C.programs) {
+        if (p.oldSlug) await client.query('update languages set slug = $1 where slug = $2 and not exists (select 1 from languages where slug = $1)', [p.slug, p.oldSlug]);
+        const vals = {
+          name: p.name, code: p.code, intro: p.intro ?? '', category: p.category, title: p.title ?? '', tagline: p.tagline ?? '',
+          description: p.description ?? '', highlights: p.highlights ?? '', exam_prep: p.examPrep ?? '', fee_note: p.feeNote ?? '',
+          level_label: p.levelLabel ?? 'Level', faqs: p.faqs ?? '', icon: p.icon ?? (p.category === 'kids' ? 'kids' : 'languages'),
+          show_on_home: !!p.showOnHome, home_title: p.homeTitle ?? '', home_blurb: p.homeBlurb ?? '',
+          seo_title: p.seoTitle ?? '', seo_description: p.seoDescription ?? '', sort: p.sort, active: true,
+        };
+        const keys = Object.keys(vals);
+        const { rows: ex } = await client.query('select id from languages where slug = $1', [p.slug]);
+        let langId;
+        if (ex.length) {
+          langId = ex[0].id;
+          await client.query(`update languages set ${keys.map((k, i) => `"${k}" = $${i + 2}`).join(', ')}, updated_at = now() where id = $1`, [langId, ...keys.map((k) => vals[k])]);
+        } else langId = await insert('languages', { slug: p.slug, ...vals });
+
+        let firstImg = null;
+        for (const c of p.courses) {
+          if (c.oldSlug) {
+            const r = await client.query('update courses set slug = $1 where slug = $2 and not exists (select 1 from courses where slug = $1) returning id', [c.slug, c.oldSlug]);
+            if (r.rows.length) slugMap[c.oldSlug] = c.slug;
+          }
+          const cv = {
+            language_id: langId, title: c.title, level: c.level, price: c.price ?? null, price_offline: c.priceOffline ?? null, mrp: c.mrp ?? null,
+            duration: c.duration ?? '', mode: 'Online / Offline', short_desc: c.shortDesc ?? '', description: c.description ?? '',
+            highlights: c.highlights ?? '', who_should_join: c.whoShouldJoin ?? '', outcomes: c.outcomes ?? '', format: c.format ?? '',
+            study_material: c.studyMaterial ?? '', exam_prep: c.examPrep ?? '', timings: c.timings ?? '', eligibility: c.eligibility ?? '',
+            faqs: c.faqs ?? '', sort: c.sort, published: true, featured: p.slug === 'german-language-course' && c.sort < 3,
+            seo_title: `${c.title} Course — Fees, Duration & Syllabus | Edexo`.slice(0, 70),
+            seo_description: `${c.title}${c.level && !c.title.includes(c.level) ? ` (${c.level})` : ''} at Edexo: ${c.shortDesc ?? ''} Online and offline classes with a free demo.`.slice(0, 160),
+          };
+          const ck = Object.keys(cv);
+          const { rows: ce } = await client.query('select id, image_id from courses where slug = $1', [c.slug]);
+          if (ce.length) {
+            await client.query(`update courses set ${ck.map((k, i) => `"${k}" = $${i + 2}`).join(', ')}, updated_at = now() where id = $1`, [ce[0].id, ...ck.map((k) => cv[k])]);
+            firstImg ??= ce[0].image_id;
+          } else await insert('courses', { slug: c.slug, ...cv });
+        }
+        if (firstImg) await client.query('update languages set image_id = coalesce(image_id, $1) where id = $2', [firstImg, langId]);
+      }
+      // Japanese crash / junior courses are discontinued
+      await client.query("update courses set published = false where slug ilike '%crash%' or slug ilike '%junior-japanese%'");
+      // images for new courses: reuse their program's image, else any course image
+      const { rows: pool } = await client.query('select distinct image_id from courses where image_id is not null order by image_id');
+      const { rows: noImg } = await client.query('select c.id, l.image_id as limg from courses c left join languages l on l.id = c.language_id where c.image_id is null order by c.id');
+      for (const [i, r] of noImg.entries()) {
+        const img = r.limg ?? pool[i % Math.max(pool.length, 1)]?.image_id ?? null;
+        if (img) await client.query('update courses set image_id = $1 where id = $2', [img, r.id]);
+      }
+      const { rows: noLangImg } = await client.query('select id from languages where image_id is null order by sort');
+      for (const [i, r] of noLangImg.entries()) {
+        const img = pool[(i + 1) % Math.max(pool.length, 1)]?.image_id;
+        if (img) await client.query('update languages set image_id = $1 where id = $2', [img, r.id]);
+      }
+
+      // pages
+      for (const pg of C.pages) {
+        if (pg.oldSlug) await client.query('update pages set slug = $1 where slug = $2 and not exists (select 1 from pages where slug = $1)', [pg.slug, pg.oldSlug]);
+        const v = {
+          title: pg.title, subtitle: pg.subtitle ?? '', kind: pg.kind ?? 'page', group_name: pg.groupName ?? '', content: pg.content ?? '',
+          highlights_title: pg.highlightsTitle ?? '', highlights: pg.highlights ?? '', faqs: pg.faqs ?? '', cta_title: pg.ctaTitle ?? '',
+          cta_text: pg.ctaText ?? '', disclaimer: pg.disclaimer ?? '', show_enquiry: pg.showEnquiry ?? true, sort: pg.sort ?? 0,
+          seo_title: pg.seoTitle ?? '', seo_description: pg.seoDescription ?? '',
+        };
+        const { rows: pe } = await client.query('select id from pages where slug = $1', [pg.slug]);
+        if (pe.length) await client.query(`update pages set ${pageCols.map((k, i) => `"${k}" = $${i + 2}`).join(', ')}, published = true, updated_at = now() where id = $1`, [pe[0].id, ...pageCols.map((k) => v[k])]);
+        else await insert('pages', { slug: pg.slug, ...v });
+      }
+      // old CMS pages replaced by program pages
+      await client.query("delete from pages where slug in ('german-language', 'french-language')");
+      await client.query("update pages set kind = 'city', content = replace(content, '/courses?language=german', '/german-language-course') where slug in ('german-language-courses-classes-mumbai','german-classes-in-pune','german-language-classes-in-jaipur')");
+
+      // global FAQs, jobs (inactive)
+      if (!(await client.query('select 1 from faqs limit 1')).rows.length) {
+        for (const [i, [group, home, q, a]] of C.faqs.entries()) await insert('faqs', { group_name: group, show_on_home: home, question: q, answer: a, sort: i });
+      }
+      if (!(await client.query('select 1 from jobs limit 1')).rows.length) {
+        for (const [i, [title, dept]] of C.jobs.entries()) await insert('jobs', { title, department: dept, location: 'Delhi (Rohini / Dwarka)', sort: i, active: false });
+      }
+
+      // why choose / features
+      await client.query('delete from reasons');
+      for (const [i, [title, desc, icon, tone]] of C.reasons.entries()) await insert('reasons', { title, description: desc, icon, tone, sort: i });
+      await client.query('delete from features');
+      for (const [i, [title, icon, tone]] of C.features.entries()) await insert('features', { title, icon, tone, sort: i });
+      await client.query("update stats set value = '11', label = 'Languages', icon = 'languages' where label in ('Language Courses', 'Languages')");
+
+      // menus (header with dropdowns + 3 footer columns)
+      await client.query('delete from menu_items');
+      for (const [i, [loc, label, href, kids]] of C.menus.entries()) {
+        const id = await insert('menu_items', { location: loc, label, href, sort: i });
+        for (const [j, [cl, ch]] of (kids ?? []).entries()) await insert('menu_items', { location: loc, label: cl, href: ch, parent_id: id, sort: j });
+      }
+
+      // redirects: point old targets at the new URLs, then add the new ones
+      const targetMap = { '/german-language': '/german-language-course', '/french-language': '/french-language-course', '/courses?language=german': '/german-language-course', '/terms-of-use': '/terms-and-conditions' };
+      for (const [o, n] of Object.entries(slugMap)) targetMap[`/courses/${o}`] = `/${n}`;
+      for (const [o, n] of Object.entries(targetMap)) await client.query('update redirects set to_path = $1 where to_path = $2', [n, o]);
+      await client.query("update redirects set to_path = '/' || substring(to_path from 10) where to_path like '/courses/%'");
+      for (const [i, [from, to]] of C.redirects.entries()) {
+        await client.query('insert into redirects (from_path, to_path, permanent, sort) values ($1,$2,true,$3) on conflict (from_path) do update set to_path = excluded.to_path', [from, to, 100 + i]);
+      }
+      await client.query("update redirects set to_path = '/contact?type=demo' where to_path = '/contact' and from_path in ('/enroll-now','/register-now')");
+
+      // lead pipeline statuses
+      await client.query("update enquiries set status = 'converted' where status = 'enrolled'");
+      await client.query("update enquiries set status = 'not_interested' where status = 'closed'");
+      await client.query('commit');
+    } catch (e) { await client.query('rollback'); throw e; }
+
+    // photos → WebP (smaller, faster); logos/icons stay PNG
+    const { rows: imgs } = await client.query("select id, data from media where mime = 'image/jpeg'");
+    for (const r of imgs) {
+      const out = await sharp(r.data).webp({ quality: 80 }).toBuffer();
+      if (out.length < r.data.length) await client.query("update media set data = $1, mime = 'image/webp', size = $2 where id = $3", [out, out.length, r.id]);
+    }
+  });
+
   data._upgrades = [...done];
   await client.query('update settings set data = $1, updated_at = now() where id = 1', [JSON.stringify(data)]);
 }

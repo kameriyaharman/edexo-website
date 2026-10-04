@@ -38,7 +38,8 @@ export default async function ResourceEdit({ params, searchParams }: Props) {
   const fields = await Promise.all(res.fields.map(async (f) => {
     if (!f.optionsFrom) return { ...f, value: row[f.name] };
     const other = resources.find((r) => r.key === f.optionsFrom![0])!;
-    const opts = await db.select().from(other.table).orderBy(asc(other.table.id));
+    let opts: any[] = await db.select().from(other.table).orderBy(asc(other.table.id));
+    if (res.key === 'menu' && f.name === 'parentId') opts = opts.filter((o) => o.location === 'header' && !o.parentId && o.id !== row.id);
     return { ...f, value: row[f.name], resolvedOptions: opts.map((o: any) => ({ value: String(o.id), label: String(o[f.optionsFrom![1]]) })) };
   }));
 

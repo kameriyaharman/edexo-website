@@ -1,39 +1,42 @@
 import { NextResponse } from 'next/server';
 import { db, schema } from '@/db';
+import { clip, looksLikeBot, rateLimited, spammyText, validEmail, validPhone } from '@/lib/spam';
 
-// very small in-memory rate limit (per container): 8 submissions / 10 min / IP
-const hits = new Map<string, number[]>();
-function limited(ip: string) {
-  const now = Date.now();
-  const arr = (hits.get(ip) ?? []).filter((t) => now - t < 10 * 60_000);
-  arr.push(now);
-  hits.set(ip, arr);
-  if (hits.size > 5000) hits.clear();
-  return arr.length > 8;
-}
-
-const clip = (v: unknown, n: number) => (typeof v === 'string' ? v.trim().slice(0, n) : '');
+const TYPES = ['enquiry', 'demo', 'international', 'franchise'];
+const FRANCHISE_EXTRA = ['city', 'state', 'business', 'investment', 'location', 'experience'];
 
 export async function POST(req: Request) {
-  const ip = (req.headers.get('x-forwarded-for') ?? '').split(',')[0].trim() || 'unknown';
-  if (limited(ip)) return NextResponse.json({ error: 'Too many requests. Please call us instead.' }, { status: 429 });
+  if (rateLimited(req, 'enquiry')) return NextResponse.json({ error: 'Too many requests. Please call or WhatsApp us instead.' }, { status: 429 });
 
   let body: Record<string, unknown>;
   try { body = await req.json(); } catch { return NextResponse.json({ error: 'Invalid request' }, { status: 400 }); }
+  const get = (k: string, n = 200) => clip(body[k], n);
 
-  if (clip(body.website, 200)) return NextResponse.json({ ok: true }); // honeypot: silently accept bots
+  if (looksLikeBot(get)) return NextResponse.json({ ok: true });
 
-  const name = clip(body.name, 120);
-  const phone = clip(body.phone, 30);
-  const email = clip(body.email, 160);
+  const name = get('name', 120);
+  const phone = get('phone', 40);
+  const email = get('email', 160);
+  const message = get('message', 3000);
+  let type = get('type', 20);
+  if (!TYPES.includes(type)) type = 'enquiry';
   if (!name) return NextResponse.json({ error: 'Please enter your name.' }, { status: 400 });
-  if (phone.replace(/\D/g, '').length < 8) return NextResponse.json({ error: 'Please enter a valid phone number.' }, { status: 400 });
-  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return NextResponse.json({ error: 'Please enter a valid email.' }, { status: 400 });
+  if (!validPhone(phone)) return NextResponse.json({ error: 'Please enter a valid phone / WhatsApp number.' }, { status: 400 });
+  if (email && !validEmail(email)) return NextResponse.json({ error: 'Please enter a valid email.' }, { status: 400 });
+  if (type === 'franchise' && !email) return NextResponse.json({ error: 'Please enter your email.' }, { status: 400 });
+  if (spammyText(message)) return NextResponse.json({ ok: true });
 
-  await db.insert(schema.enquiries).values({
-    name, phone, email,
-    course: clip(body.course, 120), branch: clip(body.branch, 120),
-    message: clip(body.message, 3000), source: clip(body.source, 80),
-  });
-  return NextResponse.json({ ok: true });
+  const country = get('country', 80);
+  if (type !== 'franchise' && country && country !== 'India') type = 'international';
+  const extra: Record<string, string> = {};
+  if (type === 'franchise') for (const k of FRANCHISE_EXTRA) { const v = get(k, 300); if (v) extra[k] = v; }
+
+  const [row] = await db.insert(schema.enquiries).values({
+    type: type === 'demo' ? 'enquiry' : type, name, phone, email, country, message,
+    language: get('language', 80), level: get('level', 40), course: get('course', 120) || (type === 'demo' ? 'Free demo' : ''),
+    courseType: get('courseType', 80), mode: get('mode', 20), format: get('format', 20), exam: get('exam', 60),
+    timing: get('timing', 40), timezone: get('timezone', 60), branch: get('branch', 80),
+    source: get('source', 80) || 'Website', pageUrl: get('pageUrl', 300), extra,
+  }).returning({ id: schema.enquiries.id });
+  return NextResponse.json({ ok: true, id: row.id });
 }

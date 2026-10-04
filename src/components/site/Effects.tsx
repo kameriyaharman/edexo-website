@@ -1,16 +1,36 @@
 'use client';
 import { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
+import { track } from '@/lib/track';
 
 const REVEAL = [
   '.section-head', '.split-head', '.feature', '.course-card', '.reason', '.level', '.post-card', '.branch',
   '.stat', '.testimonial', '.enquiry-copy', '.enquiry-form', '.about-visual', '.about-copy', '.page-hero .wrap',
   '.prose', '.contact-grid > *', '.course-aside', '.course-cover', '.tabs',
+  '.program-card', '.why-item', '.rung', '.exam-group', '.format-card', '.abroad-card', '.faq', '.hl-item', '.level-card',
+  '.fee-card', '.contact-opt', '.steps', '.fee-table-wrap', '.c-block',
 ].join(',');
 
 /** Scroll-reveal, count-up numbers, header shadow and the custom cursor for the public site. */
 export function Effects() {
   const path = usePathname();
+
+  // click tracking: WhatsApp, phone, email and marked CTA buttons
+  useEffect(() => {
+    const onClick = (e: MouseEvent) => {
+      const a = (e.target as Element | null)?.closest?.('a, button') as HTMLAnchorElement | null;
+      if (!a) return;
+      const href = a.getAttribute('href') ?? '';
+      const label = (a.textContent ?? '').trim().slice(0, 60);
+      const where = window.location.pathname;
+      if (/wa\.me|whatsapp\.com/.test(href)) track('whatsapp_click', { link_text: label, page: where });
+      else if (href.startsWith('tel:')) track('phone_click', { phone: href.slice(4), page: where });
+      else if (href.startsWith('mailto:')) track('email_click', { page: where });
+      if (a.dataset.cta) track('cta_click', { cta: a.dataset.cta, link_text: label, page: where });
+    };
+    document.addEventListener('click', onClick, { capture: true });
+    return () => document.removeEventListener('click', onClick, { capture: true });
+  }, []);
 
   // scroll reveal + count-up (re-run on every page)
   useEffect(() => {

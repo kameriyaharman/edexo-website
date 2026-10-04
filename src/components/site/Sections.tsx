@@ -2,11 +2,10 @@ import Link from 'next/link';
 import { Icon, IconBubble, iconFor } from '@/components/Icon';
 import { getSettings, s, lines, imageId } from '@/lib/settings';
 import {
-  getBranches, getCourses, getFeatures, getLanguages, getLevels, getPosts, getReasons, getStats, getTestimonials,
+  getBranches, getFeatures, getLanguages, getLevels, getPosts, getStats, getTestimonials,
 } from '@/lib/data';
-import { mediaUrl } from '@/lib/format';
-import { CourseTabs } from './CourseTabs';
-import { EnquiryForm } from './EnquiryForm';
+import { mediaUrl, waHref } from '@/lib/format';
+import { LeadForm } from './LeadForms';
 import { TestimonialSlider } from './TestimonialSlider';
 import { BranchCard, PostCard } from './Blocks';
 
@@ -15,6 +14,7 @@ export async function Hero() {
   const img = mediaUrl(imageId(st, 'heroImageId'));
   const left = lines(st, 'heroBadgesLeft');
   const right = lines(st, 'heroBadgesRight');
+  const wa = waHref(s(st, 'whatsapp'), 'Hi Edexo, I would like to know about your language courses.');
   return (
     <section className="hero">
       <div className="hero-deco" aria-hidden="true"><span className="blob b1" /><span className="blob b2" /><span className="dots" /></div>
@@ -23,8 +23,10 @@ export async function Hero() {
           {s(st, 'heroEyebrow') && <div className="pill"><Icon name="languages" size={16} />{s(st, 'heroEyebrow')}</div>}
           <h1>{s(st, 'heroTitle')} {s(st, 'heroHighlight') && <span className="hl">{s(st, 'heroHighlight')}</span>}</h1>
           <p>{s(st, 'heroText')}</p>
+          {s(st, 'heroSubtext') && <p className="hero-sub">{s(st, 'heroSubtext')}</p>}
           <div className="hero-ctas">
-            {s(st, 'heroPrimaryLabel') && <Link className="btn btn-orange btn-lg" href={s(st, 'heroPrimaryHref', '/#enroll')}><Icon name="video" size={19} />{s(st, 'heroPrimaryLabel')}</Link>}
+            {s(st, 'heroPrimaryLabel') && <Link className="btn btn-orange btn-lg" data-cta="hero_demo" href={s(st, 'heroPrimaryHref', '/#enroll')}><Icon name="video" size={19} />{s(st, 'heroPrimaryLabel')}</Link>}
+            {s(st, 'heroWhatsappLabel') && wa && <a className="btn btn-wa btn-lg" href={wa} target="_blank" rel="noopener noreferrer"><Icon name="whatsapp" size={19} />{s(st, 'heroWhatsappLabel')}</a>}
             {s(st, 'heroSecondaryLabel') && (
               <Link className="play-link" href={s(st, 'heroSecondaryHref', '/courses')}>
                 <span><Icon name="arrowRight" size={18} stroke={2.4} /></span>{s(st, 'heroSecondaryLabel')}
@@ -34,7 +36,7 @@ export async function Hero() {
         </div>
         <div className="hero-visual" aria-hidden={!img}>
           <div className="circle" />
-          {img && <img className="photo" src={img} alt={`${s(st, 'siteName', 'Edexo')} German language student`} fetchPriority="high" />}
+          {img && <img className="photo" src={img} alt={`${s(st, 'siteName', 'Edexo')} language student`} fetchPriority="high" />}
           {left.length > 0 && (
             <div className="float-card c1">{left.map((l) => <div className="row" key={l}><Icon name="check" size={16} stroke={3} color="#1A2E8C" />{l}</div>)}</div>
           )}
@@ -60,55 +62,6 @@ export async function FeaturesStrip() {
     <section className="section-sm">
       <div className="wrap features">
         {items.map((f) => <div className="feature" key={f.id}><IconBubble icon={f.icon} tone={f.tone} />{f.title}</div>)}
-      </div>
-    </section>
-  );
-}
-
-export async function CoursesSection({ initial }: { initial?: string }) {
-  const [st, langs, courses] = await Promise.all([getSettings(), getLanguages(), getCourses()]);
-  return (
-    <section className="section" id="courses" style={{ paddingTop: 40 }}>
-      <div className="wrap">
-        <div className="split-head">
-          <div>
-            <span className="eyebrow"><Icon name="sparkles" size={15} />{s(st, 'coursesEyebrow')}</span>
-            <h2 className="h2">{s(st, 'coursesTitle')}</h2>
-          </div>
-          <p>{s(st, 'coursesText')}</p>
-        </div>
-        <CourseTabs initial={initial} languages={langs.map((l) => ({ slug: l.slug, name: l.name }))} courses={courses} />
-      </div>
-    </section>
-  );
-}
-
-export async function AboutSection() {
-  const [st, reasons] = await Promise.all([getSettings(), getReasons()]);
-  const img = mediaUrl(imageId(st, 'aboutImageId'));
-  return (
-    <section className="section bg-peach about">
-      <div className="wrap">
-        <div className="about-visual">
-          <div className="ring" />
-          {img && <img src={img} alt={`German class at ${s(st, 'siteName', 'Edexo')}`} loading="lazy" />}
-          {s(st, 'aboutBadgeValue') && (
-            <div className="card about-badge"><span className="about-badge-ic"><Icon name="medal" size={22} /></span><strong data-count>{s(st, 'aboutBadgeValue')}</strong><span>{s(st, 'aboutBadgeLabel')}</span></div>
-          )}
-        </div>
-        <div className="about-copy">
-          <span className="eyebrow"><Icon name="sparkles" size={15} />{s(st, 'aboutEyebrow')}</span>
-          <h2 className="h2">{s(st, 'aboutTitle')}</h2>
-          <p>{s(st, 'aboutText')}</p>
-          <div className="reasons">
-            {reasons.map((r) => (
-              <div className="card reason" key={r.id}>
-                <IconBubble icon={r.icon} tone={r.tone} size={40} iconSize={18} />
-                <div><h3>{r.title}</h3><p>{r.description}</p></div>
-              </div>
-            ))}
-          </div>
-        </div>
       </div>
     </section>
   );
@@ -141,29 +94,39 @@ export async function LevelsSection() {
   );
 }
 
-export async function EnquiryBand({ defaultCourse }: { defaultCourse?: string }) {
-  const [st, courses, branches] = await Promise.all([getSettings(), getCourses(), getBranches()]);
+export async function EnquiryBand({ defaultCourse, defaultLanguage, defaultExam, defaultFormat, type, title, text }: {
+  defaultCourse?: string; defaultLanguage?: string; defaultExam?: string; defaultFormat?: string; type?: 'enquiry' | 'demo' | 'international';
+  title?: string | null; text?: string | null;
+}) {
+  const [st, langs, branches] = await Promise.all([getSettings(), getLanguages(), getBranches()]);
   return (
-    <section className="enquiry" id="enroll">
+    <section className="enquiry" id="enquiry">
+      <span id="enroll" aria-hidden="true" />
       <div className="wrap">
         <div className="enquiry-copy">
-          <h2 className="h2">{s(st, 'enquiryTitle')}</h2>
-          <p>{s(st, 'enquiryText')}</p>
+          <h2 className="h2">{title || s(st, 'enquiryTitle')}</h2>
+          <p>{text || s(st, 'enquiryText')}</p>
           <ul className="ticks">
             {lines(st, 'enquiryPoints').map((p) => <li key={p}><span className="tick-ic"><Icon name={iconFor(p)} size={18} /></span>{p}</li>)}
           </ul>
         </div>
-        <EnquiryForm
-          source="Free demo form"
-          courses={courses.map((c) => c.title)}
+        <LeadForm
+          variant="compact" type={type ?? 'demo'}
+          source={defaultCourse ? `Course page: ${defaultCourse}` : 'Free demo form'}
+          languages={programLanguages(langs)}
           branches={branches.map((b) => b.name)}
-          defaultCourse={defaultCourse}
-          button={s(st, 'enquiryButton', 'Book My Free Demo')}
-          success={s(st, 'enquirySuccess', 'Thank you! We will call you shortly.')}
+          defaultCourse={defaultCourse} defaultLanguage={defaultLanguage} defaultExam={defaultExam} defaultFormat={defaultFormat}
+          button={s(st, 'enquiryButton', 'Book Free Demo')}
+          success={s(st, 'enquirySuccess', 'Thank you! We will contact you shortly.')}
         />
       </div>
     </section>
   );
+}
+
+/** Names for the "Language interested in" select (kids programs fold into their language). */
+export function programLanguages(langs: { name: string; category: string }[]) {
+  return [...new Set(langs.filter((l) => l.category !== 'kids').map((l) => l.name))].concat(langs.some((l) => l.category === 'kids') ? ['Kids batch (German / French)'] : []);
 }
 
 export async function TestimonialsSection({ showTestimonials = true, showStats = true }: { showTestimonials?: boolean; showStats?: boolean }) {
