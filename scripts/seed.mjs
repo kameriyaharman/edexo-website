@@ -482,6 +482,13 @@ async function upgrades() {
     d.youtube = 'https://www.youtube.com/@EdexoInstitute';
   });
 
+  await apply('2026-10-footer-areas', async () => {
+    const { rows: ex } = await client.query("select id from menu_items where href = '/areas-we-serve' and location = 'footer_useful'");
+    if (ex.length) return;
+    const { rows: m } = await client.query("select coalesce(max(sort),0) as s from menu_items where location = 'footer_useful'");
+    await client.query("insert into menu_items (label, href, location, sort) values ('Areas We Serve', '/areas-we-serve', 'footer_useful', $1)", [Number(m[0].s) + 1]);
+  });
+
   data._upgrades = [...done];
   await client.query('update settings set data = $1, updated_at = now() where id = 1', [JSON.stringify(data)]);
 }
