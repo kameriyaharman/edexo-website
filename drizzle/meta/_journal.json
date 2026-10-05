@@ -36,6 +36,13 @@
       "when": 1791143594454,
       "tag": "0004_page_sections",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1791172949815,
+      "tag": "0005_locations",
+      "breakpoints": true
     }
   ]
 }

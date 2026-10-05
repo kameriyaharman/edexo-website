@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound, permanentRedirect, redirect } from 'next/navigation';
-import { getCourse, getPage, getProgram } from '@/lib/data';
+import { getCourse, getLocation, getPage, getProgram } from '@/lib/data';
+import { LocationPage, placeName } from '@/components/site/LocationPage';
 import { findRedirect, pageMeta } from '@/lib/seo';
 import { CoursePage, LandingPage, ProgramPage } from '@/components/site/Templates';
 import { PathwayPage } from '@/components/site/PathwayPage';
@@ -18,6 +19,8 @@ async function resolve(params: Props['params']) {
   if (program) return { parts, program };
   const course = await getCourse(slug);
   if (course) return { parts, course, program: course.languageSlug ? await getProgram(course.languageSlug) : null };
+  const location = await getLocation(slug);
+  if (location) return { parts, location };
   return { parts };
 }
 
@@ -39,6 +42,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const p = r.program;
     return pageMeta({ title: p.seoTitle || p.title || p.name, description: p.seoDescription || p.intro, path: `/${p.slug}`, imageId: p.imageId });
   }
+  if ('location' in r && r.location) {
+    const l = r.location;
+    return pageMeta({
+      title: l.seoTitle || `German & Foreign Language Classes in ${placeName(l)}`,
+      description: l.seoDescription || `Language classes for students in ${placeName(l)} — German A1–C2, French, Spanish, Japanese and more, online and offline.`,
+      path: `/${l.slug}`, imageId: l.imageId,
+    });
+  }
   return {};
 }
 
@@ -47,6 +58,7 @@ export default async function CatchAll({ params }: Props) {
   if ('page' in r && r.page) return r.page.kind === 'pathway' ? <PathwayPage p={r.page} /> : <LandingPage p={r.page} />;
   if ('course' in r && r.course) return <CoursePage c={r.course} program={r.program ?? null} />;
   if ('program' in r && r.program) return <ProgramPage p={r.program} />;
+  if ('location' in r && r.location) return <LocationPage l={r.location} />;
   const red = await findRedirect('/' + r.parts.join('/'));
   if (red) (red.permanent ? permanentRedirect : redirect)(red.to);
   notFound();

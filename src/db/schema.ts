@@ -333,3 +333,24 @@ export const payments = pgTable('payments', {
   error: text('error').default(''),
   ...timestamps,
 }, (t) => [index('payments_enquiry_idx').on(t.enquiryId)]);
+
+/** Service-area landing pages, e.g. /language-classes-in-pitampura. */
+export const locations = pgTable('locations', {
+  id: serial('id').primaryKey(),
+  name: text('name').notNull(),
+  slug: text('slug').notNull().unique(),
+  cluster: text('cluster').default(''),
+  branchId: integer('branch_id').references(() => branches.id, { onDelete: 'set null' }),
+  region: text('region').default('Delhi'),
+  areaNote: text('area_note').default(''),
+  audience: text('audience').default(''),
+  intro: text('intro').default(''),
+  content: text('content').default(''),
+  faqs: text('faqs').default(''),
+  imageId: integer('image_id').references(() => media.id, { onDelete: 'set null' }),
+  seoTitle: text('seo_title').default(''),
+  seoDescription: text('seo_description').default(''),
+  sort: integer('sort').notNull().default(0),
+  active: boolean('active').notNull().default(true),
+  ...timestamps,
+});

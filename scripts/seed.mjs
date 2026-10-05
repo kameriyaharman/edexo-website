@@ -457,6 +457,25 @@ async function upgrades() {
     } catch (e) { await client.query('rollback'); throw e; }
   });
 
+  await apply('2026-10-locations', async () => {
+    const { locations } = await import('../seed/locations.mjs');
+    const { rows: br } = await client.query("select id from branches where name ilike 'rohini%' order by sort limit 1");
+    const branchId = br[0]?.id ?? null;
+    const slugOf = (n) => n.toLowerCase().replace(/\(|\)/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    for (const [i, [name, cluster, note]] of locations.entries()) {
+      const slug = `language-classes-in-${slugOf(name)}`;
+      const short = name.replace(/ \(.*\)$/, '');
+      await client.query(
+        `insert into locations (name, slug, cluster, branch_id, region, area_note, seo_title, seo_description, sort)
+         values ($1,$2,$3,$4,$5,$6,$7,$8,$9) on conflict (slug) do nothing`,
+        [name, slug, cluster, branchId, cluster === 'haryana' ? 'Haryana' : 'Delhi', note,
+          `German & Foreign Language Classes in ${short} | Edexo`.slice(0, 70),
+          `German, French, Spanish, Japanese & English classes for students in ${short}. A1–C2 courses, exam preparation, online & offline classes near ${short} with a free demo.`.slice(0, 170),
+          i],
+      );
+    }
+  });
+
   data._upgrades = [...done];
   await client.query('update settings set data = $1, updated_at = now() where id = 1', [JSON.stringify(data)]);
 }

@@ -88,3 +88,7 @@ export function parseFaqs(text: string | null | undefined): { q: string; a: stri
 export function readingTime(md: string | null | undefined): number {
   return Math.max(1, Math.round((md ?? '').split(/\s+/).filter(Boolean).length / 200));
 }
+
+/* ---------- service-area (location) pages ---------- */
+export const getLocations = cache(async () => activeSorted(await db.select().from(t.locations)));
+export const getLocation = cache(async (slug: string) => (await getLocations()).find((l) => l.slug === slug) ?? null);

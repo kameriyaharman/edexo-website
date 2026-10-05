@@ -2,6 +2,7 @@ import { schema } from '@/db';
 import { iconNames } from '@/components/Icon';
 import type { FieldDef } from '@/lib/settings';
 import { BLOG_CATEGORIES } from '@/lib/blog';
+import { CLUSTERS } from '@/lib/locations';
 
 const icons = iconNames.map((v) => ({ value: v, label: v }));
 const toneOpts = ['orange', 'navy', 'green', 'amber', 'blue'].map((v) => ({ value: v, label: v }));
@@ -283,6 +284,29 @@ export const resources: Resource[] = [
     ],
   },
 ];
+
+resources.push({
+  key: 'locations', label: 'Locations', singular: 'location', table: schema.locations, orderBy: 'sort', slugFrom: 'name',
+  description: 'Service-area pages (e.g. /language-classes-in-pitampura). Each has its own content, FAQs and an enquiry form; all are listed on /areas-we-serve.',
+  columns: ['name', 'slug', 'cluster', 'active'],
+  viewUrl: (r) => `/${r.slug}`,
+  fields: [
+    { name: 'name', label: 'Area name', type: 'text', required: true, placeholder: 'Pitampura' },
+    { name: 'slug', label: 'URL slug', type: 'text', help: 'e.g. language-classes-in-pitampura. Leave empty to create it from the name.' },
+    { name: 'cluster', label: 'Area group', type: 'select', options: Object.entries(CLUSTERS).map(([value, c]) => ({ value, label: c.label })), help: 'Used for the "Nearby areas" links and the default "Who joins" points.' },
+    { name: 'region', label: 'State', type: 'select', options: [{ value: 'Delhi', label: 'Delhi' }, { value: 'Haryana', label: 'Haryana' }, { value: 'Uttar Pradesh', label: 'Uttar Pradesh' }] },
+    { name: 'branchId', label: 'Nearest Edexo centre', type: 'select', optionsFrom: ['branches', 'name'] },
+    { name: 'intro', label: 'Hero text (leave empty for the standard text)', type: 'textarea' },
+    { name: 'areaNote', label: 'About the area (shown under "Learn a New Language — Close to …")', type: 'textarea' },
+    { name: 'audience', label: '"Who joins from this area" points (one per line, empty = group default)', type: 'lines' },
+    { name: 'content', label: 'Extra content (optional)', type: 'markdown' },
+    { name: 'faqs', label: 'Extra FAQs', type: 'textarea', help: FAQ_HELP + ' Five location FAQs are added automatically.' },
+    { name: 'imageId', label: 'Photo (optional)', type: 'image' },
+    { name: 'active', label: 'Published', type: 'boolean' },
+    { name: 'sort', label: 'Order', type: 'number' },
+    ...seo,
+  ],
+});
 
 resources.push({
   key: 'redirects', label: 'Redirects', singular: 'redirect', table: schema.redirects, orderBy: 'sort',

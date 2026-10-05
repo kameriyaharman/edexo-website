@@ -30,16 +30,19 @@ export async function pageMeta(opts: {
   const img = mediaUrl(opts.imageId ?? null) ?? mediaUrl(imageId(st, 'ogImageId'));
   const title = opts.title || s(st, 'seoTitle', siteName);
   const url = abs(opts.path);
+  // titles that already carry the brand ("… | Edexo", "… – Edexo") must not get " | Edexo" appended again
+  const branded = !!opts.title && new RegExp(`\\b${siteName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i').test(opts.title);
+  const fullTitle = opts.title ? (branded ? opts.title : `${opts.title} | ${siteName}`) : title;
   return {
-    title: opts.title ? opts.title : { absolute: title },
+    title: opts.title && !branded ? opts.title : { absolute: fullTitle },
     description,
     alternates: { canonical: url },
     openGraph: {
-      type: opts.type ?? 'website', url, siteName, title: opts.title ? `${opts.title} | ${siteName}` : title, description, locale: 'en_IN',
+      type: opts.type ?? 'website', url, siteName, title: fullTitle, description, locale: 'en_IN',
       images: img ? [{ url: abs(img), alt: opts.title ?? siteName }] : undefined,
       ...(opts.type === 'article' && opts.publishedTime ? { publishedTime: new Date(opts.publishedTime).toISOString() } : {}),
     },
-    twitter: { card: 'summary_large_image', title: opts.title ? `${opts.title} | ${siteName}` : title, description, images: img ? [abs(img)] : undefined },
+    twitter: { card: 'summary_large_image', title: fullTitle, description, images: img ? [abs(img)] : undefined },
     ...(opts.noindex ? { robots: { index: false, follow: true } } : {}),
   };
 }

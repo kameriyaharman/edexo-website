@@ -94,7 +94,8 @@ export async function LevelsSection() {
   );
 }
 
-export async function EnquiryBand({ defaultCourse, defaultLanguage, defaultExam, defaultFormat, type, title, text }: {
+export async function EnquiryBand({ defaultCourse, defaultLanguage, defaultExam, defaultFormat, type, title, text, source }: {
+  source?: string;
   defaultCourse?: string; defaultLanguage?: string; defaultExam?: string; defaultFormat?: string; type?: 'enquiry' | 'demo' | 'international';
   title?: string | null; text?: string | null;
 }) {
@@ -112,7 +113,7 @@ export async function EnquiryBand({ defaultCourse, defaultLanguage, defaultExam,
         </div>
         <LeadForm
           variant="compact" type={type ?? 'demo'}
-          source={defaultCourse ? `Course page: ${defaultCourse}` : 'Free demo form'}
+          source={source ?? (defaultCourse ? `Course page: ${defaultCourse}` : 'Free demo form')}
           languages={programLanguages(langs)}
           branches={branches.map((b) => b.name)}
           defaultCourse={defaultCourse} defaultLanguage={defaultLanguage} defaultExam={defaultExam} defaultFormat={defaultFormat}

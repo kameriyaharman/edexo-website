@@ -124,11 +124,11 @@ export async function saveRecord(_: FormState, fd: FormData): Promise<FormState>
         const clash = await db.select({ id: res.table.id }).from(res.table)
           .where(id ? and(eq(res.table.slug, slug), ne(res.table.id, id)) : eq(res.table.slug, slug)).limit(1);
         // pages, programs and courses share the top-level URL space (/slug)
-        const shared = ['pages', 'languages', 'courses'].includes(res.key)
-          ? await Promise.all([schema.pages, schema.languages, schema.courses].filter((t) => t !== res.table)
+        const shared = ['pages', 'languages', 'courses', 'locations'].includes(res.key)
+          ? await Promise.all([schema.pages, schema.languages, schema.courses, schema.locations].filter((t) => t !== res.table)
             .map((t) => db.select({ id: t.id }).from(t).where(eq(t.slug, slug)).limit(1)))
           : [];
-        const reserved = ['admin', 'api', 'media', 'blog', 'courses', 'contact', 'about', 'faqs'].includes(slug) && !(res.key === 'pages' && slug === 'about');
+        const reserved = ['admin', 'api', 'media', 'blog', 'courses', 'contact', 'about', 'faqs', 'enroll', 'areas-we-serve', 'thank-you'].includes(slug) && !(res.key === 'pages' && slug === 'about');
         if (!clash.length && !shared.some((r) => r.length) && !reserved) break;
         slug = `${base}-${i}`;
       }
