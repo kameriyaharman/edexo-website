@@ -22,10 +22,7 @@ function useSubmit(endpoint: string, type: string, source: string) {
     fd.set('_t', String(Date.now() - started.current));
     fd.set('pageUrl', window.location.pathname + window.location.search);
     try { fd.set('timezone', String(fd.get('timezone') || Intl.DateTimeFormat().resolvedOptions().timeZone || '')); } catch { /* */ }
-    const dial = String(fd.get('dial') || '').trim();
-    const num = String(fd.get('phone') || '').trim();
-    if (dial && num && !num.startsWith('+')) fd.set('phone', `${dial} ${num.replace(/^0+/, '')}`);
-    fd.delete('dial');
+    fd.set('phone', String(fd.get('phone') || '').trim());
     setState('sending');
     try {
       const res = await fetch(endpoint, multipart
@@ -86,20 +83,11 @@ function Honeypot() {
   );
 }
 
-function PhoneField({ id, label = 'WhatsApp number', country, required = true }: { id: string; label?: string; country: string; required?: boolean }) {
-  const dial = countries.find(([c]) => c === country)?.[1] ?? '+91';
-  const dials = [...new Set(countries.map(([, d]) => d).filter(Boolean))].sort((a, b) => Number(a.slice(1)) - Number(b.slice(1)));
+function PhoneField({ id, label = 'WhatsApp number', required = true }: { id: string; label?: string; country?: string; required?: boolean }) {
   return (
-    <label className="field phone-field" htmlFor={id}>{label}
-      <span className="phone-row">
-        <select name="dial" aria-label="Country code" defaultValue={dial} key={dial}>
-          {dials.map((d) => <option key={d} value={d}>{d}</option>)}
-        </select>
-        <span className="phone-input"><span className="input-ic"><Icon name="whatsapp" size={18} /></span>
-          <input id={id} name="phone" type="tel" required={required} minLength={6} autoComplete="tel-national" inputMode="tel" placeholder="98765 43210" />
-        </span>
-      </span>
-    </label>
+    <F label={label} icon="whatsapp" htmlFor={id}>
+      <input id={id} name="phone" type="tel" required={required} minLength={6} autoComplete="tel" inputMode="tel" placeholder="98765 43210" />
+    </F>
   );
 }
 

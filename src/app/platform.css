@@ -265,11 +265,6 @@
 /* forms */
 .enquiry-form.lead-full, .contact-form.lead-full { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .contact-form { padding: 32px; display: grid; gap: 18px; }
-.phone-row { display: flex; gap: 8px; }
-.phone-row select { width: 96px !important; flex: none; padding-left: 12px !important; }
-.phone-input { position: relative; flex: 1; min-width: 0; }
-.phone-input .input-ic { bottom: 13px; }
-.phone-field > .phone-row { position: relative; }
 .form-note { display: flex; gap: 6px; align-items: center; font-size: 13px; color: var(--muted); justify-content: center; }
 .upload-field input[type='file'] { position: absolute; inset: 24px 0 0 0; opacity: 0; cursor: pointer; padding: 0 !important; }
 .upload-box { display: flex; gap: 10px; align-items: center; padding: 13px 14px; border: 1.5px dashed var(--field); border-radius: 10px; background: #FAFBFE; color: var(--muted); font-weight: 500; }
