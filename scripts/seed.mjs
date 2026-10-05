@@ -74,7 +74,7 @@ async function seedContent() {
       primaryPhone: '+91 99537 74123',
       whatsapp: '919953774123',
       email: '',
-      facebook: '#', instagram: '#', youtube: '', linkedin: '',
+      facebook: 'https://www.facebook.com/goedexo', instagram: 'https://www.instagram.com/edexo_', youtube: 'https://www.youtube.com/@EdexoInstitute', linkedin: '',
       topbarItems: 'Rohini: +91 99537 74123\nDwarka: +91 99114 64123',
       headerCtaLabel: 'Enroll Now', headerCtaHref: '/#enroll',
       signInLabel: 'Sign In', signInHref: '',
@@ -474,6 +474,12 @@ async function upgrades() {
           i],
       );
     }
+  });
+
+  await apply('2026-10-social-links', async (d) => {
+    d.facebook = 'https://www.facebook.com/goedexo';
+    d.instagram = 'https://www.instagram.com/edexo_';
+    d.youtube = 'https://www.youtube.com/@EdexoInstitute';
   });
 
   data._upgrades = [...done];
