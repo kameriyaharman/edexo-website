@@ -489,6 +489,14 @@ async function upgrades() {
     await client.query("insert into menu_items (label, href, location, sort) values ('Areas We Serve', '/areas-we-serve', 'footer_useful', $1)", [Number(m[0].s) + 1]);
   });
 
+  await apply('2026-10-refund-policy', async () => {
+    const { refundPolicy: r } = await import('../seed/refund-policy.mjs');
+    await client.query(
+      "update pages set content = $1, subtitle = $2, seo_description = $3, published = true, updated_at = now() where slug = 'refund-policy'",
+      [r.content, r.subtitle, r.seoDescription],
+    );
+  });
+
   data._upgrades = [...done];
   await client.query('update settings set data = $1, updated_at = now() where id = 1', [JSON.stringify(data)]);
 }
