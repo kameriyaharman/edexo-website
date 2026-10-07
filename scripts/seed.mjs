@@ -501,6 +501,11 @@ async function upgrades() {
     d.ogImageId = await addImage('share-logo.png', 'Edexo');
   });
 
+  await apply('2026-10-hide-credit', async (d) => {
+    d.creditText = '';
+    d.creditUrl = '';
+  });
+
   data._upgrades = [...done];
   await client.query('update settings set data = $1, updated_at = now() where id = 1', [JSON.stringify(data)]);
 }
