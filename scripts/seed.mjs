@@ -497,6 +497,10 @@ async function upgrades() {
     );
   });
 
+  await apply('2026-10-share-logo', async (d) => {
+    d.ogImageId = await addImage('share-logo.png', 'Edexo');
+  });
+
   data._upgrades = [...done];
   await client.query('update settings set data = $1, updated_at = now() where id = 1', [JSON.stringify(data)]);
 }

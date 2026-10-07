@@ -27,7 +27,10 @@ export async function pageMeta(opts: {
   const st = await getSettings();
   const siteName = s(st, 'siteName', 'Edexo');
   const description = (opts.description || s(st, 'seoDescription')).slice(0, 300);
-  const img = mediaUrl(opts.imageId ?? null) ?? mediaUrl(imageId(st, 'ogImageId'));
+  // link previews (WhatsApp, Facebook, LinkedIn) show the Edexo logo card from Settings → Social share image;
+  // only blog articles use their own cover photo
+  const own = opts.type === 'article' ? mediaUrl(opts.imageId ?? null) : null;
+  const img = own ?? mediaUrl(imageId(st, 'ogImageId'));
   const title = opts.title || s(st, 'seoTitle', siteName);
   const url = abs(opts.path);
   // titles that already carry the brand ("… | Edexo", "… – Edexo") must not get " | Edexo" appended again
