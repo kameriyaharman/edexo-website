@@ -239,3 +239,27 @@ export async function removeAdmin(fd: FormData) {
   await db.delete(schema.adminUsers).where(eq(schema.adminUsers.id, id));
   revalidatePath('/admin/account');
 }
+
+/* ---------- lead alerts: test ---------- */
+
+export async function sendTestAlert(_: FormState, fd: FormData): Promise<FormState> {
+  await requireAdmin();
+  const { getSettings } = await import('@/lib/settings');
+  const { sendLeadEmail, sendLeadWhatsapp } = await import('@/lib/notify');
+  const st = await getSettings();
+  const lead = {
+    id: 0, type: 'enquiry', name: 'Test Student', phone: '+91 98765 43210', email: '', country: 'India', language: 'German',
+    level: 'A1', course: 'German A1', mode: 'Online', branch: 'Rohini', message: 'This is a test alert from Admin → Lead alerts.',
+    source: 'Admin test', pageUrl: '', notes: '',
+  };
+  const which = String(fd.get('channel') ?? 'both');
+  const done: string[] = [], failed: string[] = [];
+  if (which !== 'whatsapp') {
+    try { await sendLeadEmail(st, lead); done.push('email'); } catch (e) { failed.push(`Email: ${(e as Error).message}`); }
+  }
+  if (which !== 'email') {
+    try { await sendLeadWhatsapp(st, lead); done.push('WhatsApp'); } catch (e) { failed.push(`WhatsApp: ${(e as Error).message}`); }
+  }
+  if (failed.length) return { error: (done.length ? `Sent ${done.join(' & ')}. ` : '') + failed.join(' · ') };
+  return { ok: `Test ${done.join(' & ')} sent. Check the inbox / phone.` };
+}

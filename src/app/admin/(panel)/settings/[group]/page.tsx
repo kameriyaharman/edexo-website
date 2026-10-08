@@ -4,6 +4,7 @@ import { saveSettings } from '@/admin/actions';
 import { getSettings, settingsGroups } from '@/lib/settings';
 import { Icon } from '@/components/Icon';
 import { iconForAdminPath } from '@/admin/nav';
+import { TestAlert } from '@/admin/TestAlert';
 
 type Props = { params: Promise<{ group: string }> };
 
@@ -25,6 +26,7 @@ export default async function SettingsPage({ params }: Props) {
       </div>
       <AdminForm action={saveSettings} hidden={{ __group: group.key }} layout={group.fields.some((f) => f.type === 'image') ? 'split' : 'single'}
         fields={group.fields.map((f) => ({ ...f, value: f.type === 'secret' ? (st[f.name] ? 'set' : '') : st[f.name] }))} />
+      {group.key === 'notifications' && <TestAlert />}
     </>
   );
 }

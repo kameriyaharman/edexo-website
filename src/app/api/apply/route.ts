@@ -1,4 +1,5 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, after } from 'next/server';
+import { notifyNewLead } from '@/lib/notify';
 import { db, schema } from '@/db';
 import { clip, botCheck, rateLimited, validEmail, validPhone } from '@/lib/spam';
 
@@ -40,10 +41,11 @@ export async function POST(req: Request) {
   const [f] = await db.insert(schema.files).values({ filename: safeName, mime: OK_TYPES[ext], size: buf.length, data: buf }).returning({ id: schema.files.id });
   const extra: Record<string, string> = {};
   for (const k of EXTRA) { const v = get(k, 300); if (v) extra[k] = v; }
-  await db.insert(schema.enquiries).values({
+  const [row] = await db.insert(schema.enquiries).values({
     type: 'career', name, phone, email, language: get('language', 80), course: get('position', 120), message: get('message', 3000),
     source: 'Careers page', pageUrl: get('pageUrl', 300), country: 'India', extra, fileId: f.id,
     notes: bot === 'flag' ? 'Possible spam: the hidden anti-spam field was filled (can also be browser AutoFill).' : '',
-  });
+  }).returning();
+  after(() => notifyNewLead(row));
   return NextResponse.json({ ok: true });
 }

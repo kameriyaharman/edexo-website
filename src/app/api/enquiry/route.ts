@@ -1,4 +1,5 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, after } from 'next/server';
+import { notifyNewLead } from '@/lib/notify';
 import { db, schema } from '@/db';
 import { leadRef } from '@/lib/payments';
 import { clip, botCheck, rateLimited, spammyText, validEmail, validPhone } from '@/lib/spam';
@@ -45,7 +46,8 @@ export async function POST(req: Request) {
     timing: get('timing', 40), timezone: get('timezone', 60), branch: get('branch', 80),
     source: get('source', 80) || 'Website', pageUrl: get('pageUrl', 300), extra,
     notes: bot === 'flag' ? 'Possible spam: the hidden anti-spam field was filled (can also be browser AutoFill).' : '',
-  }).returning({ id: schema.enquiries.id });
+  }).returning();
+  after(() => notifyNewLead(row)); // email + WhatsApp alert, sent after the student gets the response
   // demo / course / international enquiries continue to the Thank-you (and Pay Now) page
   return NextResponse.json({ ok: true, ...(!COUNSELLING.includes(type) ? { next: `/thank-you/${leadRef(row.id)}` } : {}) });
 }

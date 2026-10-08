@@ -197,6 +197,28 @@ export const settingsGroups: SettingsGroup[] = [
     ],
   },
   {
+    key: 'notifications', title: 'Lead alerts (email & WhatsApp)',
+    description: 'Every new enquiry, demo request, Ausbildung / Study in Germany form, franchise enquiry and job application is sent to the institute by email and WhatsApp. Save first, then use "Send test alert" at the bottom.',
+    fields: [
+      { name: 'notifyEmailEnabled', label: 'Send an email for every new lead', type: 'boolean', group: 'Email' },
+      { name: 'notifyEmailTo', label: 'Send to (email addresses, comma separated)', type: 'text', placeholder: 'info@edexo.in', help: 'Empty = the email in Brand & contact.', group: 'Email' },
+      { name: 'emailProvider', label: 'Email service', type: 'select', options: [{ value: 'brevo', label: 'Brevo (free 300 emails/day)' }, { value: 'resend', label: 'Resend (free 100 emails/day)' }], group: 'Email', help: 'The hosting plan does not allow SMTP, so mail goes through one of these services.' },
+      { name: 'emailApiKey', label: 'Email service API key', type: 'secret', help: 'Brevo: Settings → SMTP & API → API keys (starts with xkeysib-). Resend: API Keys. Leave empty to keep the saved key.', group: 'Email' },
+      { name: 'emailFrom', label: 'From', type: 'text', placeholder: 'Edexo Website <website@edexo.in>', help: 'Must be a verified sender / domain in the email service. Replies go to the student\'s email.', group: 'Email' },
+      { name: 'notifyWhatsappEnabled', label: 'Send a WhatsApp message for every new lead', type: 'boolean', group: 'WhatsApp' },
+      { name: 'notifyWhatsappTo', label: 'Send to (WhatsApp numbers with country code, comma separated)', type: 'text', placeholder: '919999904123', help: 'Empty = the WhatsApp number in Brand & contact.', group: 'WhatsApp' },
+      { name: 'whatsappProvider', label: 'WhatsApp service', type: 'select', options: [{ value: 'meta', label: 'WhatsApp Cloud API (Meta, official)' }, { value: 'aisensy', label: 'AiSensy' }, { value: 'webhook', label: 'Webhook (Pabbly, Zapier, Interakt, Make…)' }], group: 'WhatsApp',
+        help: 'Message template (Utility) with 6 variables: {{1}} lead type, {{2}} name, {{3}} phone, {{4}} course, {{5}} source, {{6}} lead ID. Example: "New {{1}} on the Edexo website. Name: {{2}}, Phone: {{3}}, Course: {{4}}, Source: {{5}}, Lead ID: {{6}}".' },
+      { name: 'waPhoneNumberId', label: 'Meta: Phone number ID', type: 'text', help: 'Meta Business → WhatsApp Manager → API Setup.', group: 'WhatsApp' },
+      { name: 'waAccessToken', label: 'Meta: permanent access token', type: 'secret', help: 'A System User token with whatsapp_business_messaging. Leave empty to keep the saved token.', group: 'WhatsApp' },
+      { name: 'waTemplateName', label: 'Meta: approved template name', type: 'text', placeholder: 'new_lead_alert', group: 'WhatsApp' },
+      { name: 'waTemplateLang', label: 'Meta: template language code', type: 'text', placeholder: 'en', group: 'WhatsApp' },
+      { name: 'aisensyApiKey', label: 'AiSensy: API key', type: 'secret', help: 'Leave empty to keep the saved key.', group: 'WhatsApp' },
+      { name: 'aisensyCampaign', label: 'AiSensy: API campaign name (live)', type: 'text', group: 'WhatsApp' },
+      { name: 'whatsappWebhookUrl', label: 'Webhook URL', type: 'url', placeholder: 'https://…', help: 'Receives a JSON POST with the lead, a ready "text", the 6 template "params" and the "to" numbers.', group: 'WhatsApp' },
+    ],
+  },
+  {
     key: 'analytics', title: 'Analytics & tracking',
     description: 'Form submissions, WhatsApp clicks, phone clicks and button clicks are sent to every tag that is filled in.',
     fields: [
