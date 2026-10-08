@@ -245,21 +245,26 @@ export async function removeAdmin(fd: FormData) {
 export async function sendTestAlert(_: FormState, fd: FormData): Promise<FormState> {
   await requireAdmin();
   const { getSettings } = await import('@/lib/settings');
-  const { sendLeadEmail, sendLeadWhatsapp } = await import('@/lib/notify');
+  const n = await import('@/lib/notify');
   const st = await getSettings();
-  const lead = {
-    id: 0, type: 'enquiry', name: 'Test Student', phone: '+91 98765 43210', email: '', country: 'India', language: 'German',
-    level: 'A1', course: 'German A1', mode: 'Online', branch: 'Rohini', message: 'This is a test alert from Admin → Lead alerts.',
-    source: 'Admin test', pageUrl: '', notes: '',
-  };
-  const which = String(fd.get('channel') ?? 'both');
-  const done: string[] = [], failed: string[] = [];
-  if (which !== 'whatsapp') {
-    try { await sendLeadEmail(st, lead); done.push('email'); } catch (e) { failed.push(`Email: ${(e as Error).message}`); }
+  const channel = String(fd.get('channel') ?? '');
+  try {
+    if (channel === 'chatids') {
+      const ids = await n.telegramChatIds(st);
+      return ids.length ? { ok: `Found — ${ids.join(' · ')}. Copy the number(s) into "Telegram chat IDs" and save.` }
+        : { error: 'No chats yet. Send /start to the bot from Telegram (or add it to a group and send a message), then try again.' };
+    }
+    const lead = {
+      id: 0, type: 'enquiry', name: 'Test Student', phone: '+91 98765 43210', email: '', country: 'India', language: 'German',
+      level: 'A1', course: 'German A1', mode: 'Online', branch: 'Rohini', message: 'This is a test alert from Admin → Lead alerts.',
+      source: 'Admin test', pageUrl: '', notes: '',
+    };
+    if (channel === 'email') await n.sendLeadEmail(st, lead);
+    else if (channel === 'whatsapp') await n.sendLeadWhatsapp(st, lead);
+    else if (channel === 'telegram') await n.sendLeadTelegram(st, lead);
+    else return { error: 'Unknown test' };
+    return { ok: `Test ${channel === 'email' ? 'email' : channel === 'whatsapp' ? 'WhatsApp' : 'Telegram'} sent. Check the inbox / phone.` };
+  } catch (e) {
+    return { error: (e as Error).message };
   }
-  if (which !== 'email') {
-    try { await sendLeadWhatsapp(st, lead); done.push('WhatsApp'); } catch (e) { failed.push(`WhatsApp: ${(e as Error).message}`); }
-  }
-  if (failed.length) return { error: (done.length ? `Sent ${done.join(' & ')}. ` : '') + failed.join(' · ') };
-  return { ok: `Test ${done.join(' & ')} sent. Check the inbox / phone.` };
 }

@@ -4,8 +4,9 @@ import { leadId } from '@/lib/format';
 import { siteUrl } from '@/lib/seo';
 
 /**
- * New-lead alerts to the institute: email (Brevo or Resend HTTP API — Railway Hobby blocks SMTP)
- * and WhatsApp (Meta Cloud API template, AiSensy campaign, or any webhook such as Pabbly/Zapier/Interakt).
+ * New-lead alerts to the institute — free services only:
+ * email (Brevo / Resend free plans, HTTP API because Railway Hobby blocks SMTP),
+ * WhatsApp (CallMeBot, free, to the owner's own number) and Telegram (free bot).
  * Never throws: a failed alert must never lose or block the enquiry, which is already saved.
  */
 
@@ -111,45 +112,65 @@ export async function sendLeadEmail(st: Settings, l: LeadForAlert, toOverride?: 
   }
 }
 
-/** The 6 template variables, in order: {{1}} type, {{2}} name, {{3}} phone, {{4}} course, {{5}} source, {{6}} lead ID. */
-function waParams(l: LeadForAlert): string[] {
-  const clean = (v: string) => (v || '-').replace(/\s+/g, ' ').trim().slice(0, 200) || '-';
-  const course = [l.course, l.language && l.course?.toLowerCase().includes(l.language.toLowerCase()) ? '' : l.language, l.mode].filter(Boolean).join(' · ');
-  return [TYPE_LABEL[l.type] ?? 'Enquiry', l.name, l.phone, course || '-', l.source || 'Website', leadId(l.id)].map(clean);
+/** Short plain-text alert for WhatsApp / Telegram. */
+function shortText(l: LeadForAlert) {
+  const keep = new Set(['Lead ID', 'Name', 'Phone / WhatsApp', 'Email', 'Country', 'Language', 'Level', 'Course', 'Position', 'Mode', 'Batch', 'Exam', 'Preferred timing', 'Centre', 'Message', 'Source', 'Note']);
+  const body = rows(l).filter(([k]) => keep.has(k) && k !== 'Lead ID')
+    .map(([k, v]) => `${k}: ${String(v).replace(/\s+/g, ' ').slice(0, k === 'Message' ? 300 : 120)}`).join('\n');
+  const wa = digits(l.phone);
+  const waLink = wa ? `\nWhatsApp student: https://wa.me/${wa.length === 10 ? '91' + wa : wa}` : '';
+  return `${l.notes?.startsWith('Possible spam') ? '[Possible spam] ' : ''}New ${TYPE_LABEL[l.type] ?? 'enquiry'} (${leadId(l.id)})\n\n${body}\n${waLink}\nOpen in admin: ${leadUrl(l)}`;
 }
 
-export async function sendLeadWhatsapp(st: Settings, l: LeadForAlert, toOverride?: string[]) {
-  const to = (toOverride ?? list(s(st, 'notifyWhatsappTo') || s(st, 'whatsapp'))).map(digits).filter((n) => n.length >= 10)
-    .map((n) => (n.length === 10 ? '91' + n : n));
-  const provider = s(st, 'whatsappProvider', 'meta');
-  const params = waParams(l);
-  if (provider === 'webhook') {
-    const url = s(st, 'whatsappWebhookUrl').trim();
-    if (!/^https:\/\//.test(url)) throw new Error('Webhook URL must start with https://');
-    await post(url, {}, { event: 'new_lead', to, leadId: leadId(l.id), adminUrl: leadUrl(l), text: `${subject(l)}\n\n${emailText(l)}`, params, lead: l });
-    return;
+/** CallMeBot (free): one "number apikey" pair per line — each number gets its own key from CallMeBot. */
+function callmebotRecipients(st: Settings) {
+  return s(st, 'callmebotRecipients').split('\n').map((line) => {
+    const [num = '', key = ''] = line.trim().split(/[\s,;:]+/);
+    const n = digits(num);
+    return { phone: n.length === 10 ? '91' + n : n, key: key.trim() };
+  }).filter((r) => r.phone.length >= 11 && r.key);
+}
+
+export async function sendLeadWhatsapp(st: Settings, l: LeadForAlert) {
+  const to = callmebotRecipients(st);
+  if (!to.length) throw new Error('Add at least one line "number apikey", e.g. 919999904123 1234567.');
+  const text = shortText(l);
+  const errors: string[] = [];
+  for (const r of to) {
+    const url = `https://api.callmebot.com/whatsapp.php?phone=%2B${r.phone}&apikey=${encodeURIComponent(r.key)}&text=${encodeURIComponent(text)}`;
+    try {
+      const res = await fetch(url, { cache: 'no-store', signal: AbortSignal.timeout(20_000) });
+      const body = (await res.text().catch(() => '')).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+      if (!res.ok || /error|invalid|not allowed|wrong/i.test(body)) throw new Error(`${res.status} ${body.slice(0, 200)}`);
+    } catch (e) { errors.push(`+${r.phone}: ${(e as Error).message}`); }
   }
-  if (!to.length) throw new Error('No WhatsApp number set to send alerts to.');
-  if (provider === 'aisensy') {
-    const key = s(st, 'aisensyApiKey').trim(), campaign = s(st, 'aisensyCampaign').trim();
-    if (!key || !campaign) throw new Error('AiSensy API key and campaign name are required.');
-    for (const n of to) {
-      await post('https://backend.aisensy.com/campaign/t1/api/v2', {}, {
-        apiKey: key, campaignName: campaign, destination: n, userName: 'Edexo Website', templateParams: params, source: 'edexo-website',
-      });
-    }
-    return;
+  if (errors.length) throw new Error(errors.join(' · '));
+}
+
+/** Telegram bot (free, official). */
+export async function sendLeadTelegram(st: Settings, l: LeadForAlert) {
+  const token = s(st, 'telegramBotToken').trim();
+  const chats = list(s(st, 'telegramChatIds'));
+  if (!token) throw new Error('Bot token is not set.');
+  if (!chats.length) throw new Error('No chat ID set.');
+  for (const chat_id of chats) {
+    await post(`https://api.telegram.org/bot${token}/sendMessage`, {}, { chat_id, text: shortText(l), disable_web_page_preview: true });
   }
-  // Meta WhatsApp Cloud API — business-initiated messages must use an approved template.
-  const phoneId = s(st, 'waPhoneNumberId').trim(), token = s(st, 'waAccessToken').trim();
-  const template = s(st, 'waTemplateName').trim(), lang = s(st, 'waTemplateLang', 'en').trim() || 'en';
-  if (!phoneId || !token || !template) throw new Error('Phone number ID, access token and template name are required.');
-  for (const n of to) {
-    await post(`https://graph.facebook.com/v21.0/${encodeURIComponent(phoneId)}/messages`, { authorization: `Bearer ${token}` }, {
-      messaging_product: 'whatsapp', to: n, type: 'template',
-      template: { name: template, language: { code: lang }, components: [{ type: 'body', parameters: params.map((text) => ({ type: 'text', text })) }] },
-    });
+}
+
+/** Telegram helper: chat IDs of everyone who has sent /start to the bot. */
+export async function telegramChatIds(st: Settings) {
+  const token = s(st, 'telegramBotToken').trim();
+  if (!token) throw new Error('Save the bot token first.');
+  const res = await fetch(`https://api.telegram.org/bot${token}/getUpdates`, { cache: 'no-store', signal: AbortSignal.timeout(15_000) });
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok || !json.ok) throw new Error(json.description || `Telegram error ${res.status}`);
+  const found = new Map<string, string>();
+  for (const u of json.result ?? []) {
+    const c = u.message?.chat ?? u.my_chat_member?.chat ?? u.channel_post?.chat;
+    if (c?.id) found.set(String(c.id), c.title || [c.first_name, c.last_name].filter(Boolean).join(' ') || c.username || '');
   }
+  return [...found.entries()].map(([id, name]) => `${name || 'Chat'}: ${id}`);
 }
 
 /** Fire all enabled alerts for a newly saved lead. Errors are logged, never thrown. */
@@ -159,5 +180,6 @@ export async function notifyNewLead(l: LeadForAlert) {
   const jobs: Promise<void>[] = [];
   if (flag(st, 'notifyEmailEnabled')) jobs.push(sendLeadEmail(st, l).catch((e) => console.error(`[notify] email ${leadId(l.id)} failed:`, (e as Error).message)));
   if (flag(st, 'notifyWhatsappEnabled')) jobs.push(sendLeadWhatsapp(st, l).catch((e) => console.error(`[notify] whatsapp ${leadId(l.id)} failed:`, (e as Error).message)));
+  if (flag(st, 'notifyTelegramEnabled')) jobs.push(sendLeadTelegram(st, l).catch((e) => console.error(`[notify] telegram ${leadId(l.id)} failed:`, (e as Error).message)));
   await Promise.all(jobs);
 }
