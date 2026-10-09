@@ -21,6 +21,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${base}/blog`, changeFrequency: 'weekly', priority: 0.7 },
     { url: `${base}/contact`, priority: 0.7 },
     { url: `${base}/faqs`, priority: 0.5 },
+    { url: `${base}/upcoming-batches`, changeFrequency: 'weekly', priority: 0.8 },
     { url: `${base}/areas-we-serve`, priority: 0.6 },
     ...locs.map((l) => ({ url: `${base}/${l.slug}`, lastModified: l.updatedAt, priority: 0.7 })),
     ...programs.map((p) => ({ url: `${base}/${p.slug}`, lastModified: p.updatedAt, priority: 0.9, ...(p.imageId ? { images: [base + mediaUrl(p.imageId)] } : {}) })),

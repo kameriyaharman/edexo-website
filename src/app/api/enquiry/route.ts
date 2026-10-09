@@ -38,12 +38,13 @@ export async function POST(req: Request) {
   if (!COUNSELLING.includes(type) && country && country !== 'India') type = 'international';
   const extra: Record<string, string> = {};
   for (const k of EXTRA[type] ?? []) { const v = get(k, 300); if (v) extra[k] = v; }
+  if (!COUNSELLING.includes(type)) { const batch = get('batch', 300); if (batch) extra.batch = batch; } // chosen upcoming batch
 
   const [row] = await db.insert(schema.enquiries).values({
     type: type === 'demo' ? 'enquiry' : type, name, phone, email, country, message,
     language: get('language', 80), level: get('level', 40), course: get('course', 120) || (type === 'demo' ? 'Free demo' : ''),
     courseType: get('courseType', 80), mode: get('mode', 20), format: get('format', 20), exam: get('exam', 60),
-    timing: get('timing', 40), timezone: get('timezone', 60), branch: get('branch', 80),
+    timing: get('timing', 60), timezone: get('timezone', 60), branch: get('branch', 80),
     source: get('source', 80) || 'Website', pageUrl: get('pageUrl', 300), extra,
     notes: bot === 'flag' ? 'Possible spam: the hidden anti-spam field was filled (can also be browser AutoFill).' : '',
   }).returning();

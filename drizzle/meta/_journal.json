@@ -43,6 +43,13 @@
       "when": 1791172949815,
       "tag": "0005_locations",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1791515319974,
+      "tag": "0006_batches",
+      "breakpoints": true
     }
   ]
 }

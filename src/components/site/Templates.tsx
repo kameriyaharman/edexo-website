@@ -12,6 +12,7 @@ import { EnquiryBand } from './Sections';
 import { CtaBand, Disclaimer, FaqList, FaqSection, FeeTable, HighlightGrid, Ticks } from './Platform';
 import { CareerForm, FranchiseForm } from './LeadForms';
 import { JsonLd } from './StructuredData';
+import { BatchesStrip } from './Batches';
 
 type PageRow = Awaited<ReturnType<typeof getPagesByKind>>[number];
 
@@ -155,6 +156,7 @@ export async function ProgramPage({ p }: { p: Program }) {
           </aside>
         </div>
       </section>
+      <BatchesStrip program={p.name} name={p.name} />
       {p.courses.length > 0 && (
         <section className="section bg-peach" id="fees">
           <div className="wrap">
@@ -268,6 +270,7 @@ export async function CoursePage({ c, program }: { c: CourseRow; program: Progra
           </aside>
         </div>
       </section>
+      <BatchesStrip courseSlug={c.slug} name={c.title} />
       <EnquiryBand defaultCourse={c.title} defaultLanguage={program?.category === 'kids' ? 'Kids batch (German / French)' : c.languageName ?? undefined} title={`Book a free ${c.title} demo`} />
     </>
   );

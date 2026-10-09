@@ -180,6 +180,9 @@ export function Field(p: FieldProps) {
     case 'date':
       input = <input id={`f-${name}`} name={name} type="date" defaultValue={toDateInput(value)} required={required} />;
       break;
+    case 'time':
+      input = <input id={`f-${name}`} name={name} type="time" step={300} defaultValue={str} required={required} />;
+      break;
     case 'select':
       input = (
         <select id={`f-${name}`} name={name} defaultValue={str} required={required}>
@@ -195,8 +198,9 @@ export function Field(p: FieldProps) {
       );
       break;
     default:
-      input = maxLength ? <Counted {...p} /> : <input id={`f-${name}`} name={name} type={type === 'url' ? 'url' : 'text'} defaultValue={str} required={required} placeholder={placeholder ?? (type === 'url' ? 'https://' : undefined)} />;
+      input = maxLength ? <Counted {...p} /> : <input id={`f-${name}`} name={name} type={type === 'url' ? 'url' : 'text'} defaultValue={str} required={required} placeholder={placeholder ?? (type === 'url' ? 'https://' : undefined)} list={p.suggestions?.length ? `dl-${name}` : undefined} />;
   }
+  const datalist = p.suggestions?.length && type === 'text' ? <datalist id={`dl-${name}`}>{p.suggestions.map((o) => <option key={o} value={o} />)}</datalist> : null;
   const wide = type === 'textarea' || type === 'lines';
   return (
     <div className={`a-field${wide ? ' a-wide' : ''}`}>
@@ -205,6 +209,7 @@ export function Field(p: FieldProps) {
         {prefix && <span className="a-prefix">{prefix}</span>}
         {input}
         {type === 'select' && <span className="a-caret"><Icon name="chevronDown" size={16} /></span>}
+        {datalist}
       </div>
       {help && <small className="a-help">{help}</small>}
     </div>
@@ -233,6 +238,8 @@ function Card({ title, icon, children, collapsible, defaultOpen = true }: { titl
 function groupIcon(title: string) {
   const t = title.toLowerCase();
   if (/fee|price/.test(t)) return 'wallet';
+  if (/date|time/.test(t)) return 'calendar';
+  if (/seat|centre/.test(t)) return 'users';
   if (/faq/.test(t)) return 'help';
   if (/home/.test(t)) return 'home';
   if (/syllabus|course page|learn/.test(t)) return 'book';

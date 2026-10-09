@@ -101,6 +101,9 @@ export type LeadFormProps = {
   source: string; languages: string[]; branches: string[]; button?: string; success?: string;
   variant?: 'full' | 'compact'; type?: 'enquiry' | 'demo' | 'international';
   defaultLanguage?: string; defaultCourse?: string; defaultExam?: string; defaultFormat?: string; className?: string;
+  defaultMode?: string; defaultBranch?: string; defaultTiming?: string;
+  /** extra hidden values sent with the lead (e.g. the chosen batch) */
+  hiddenFields?: Record<string, string>;
 };
 
 /** Main lead form: free demo, course enquiry and international student enquiry. */
@@ -108,7 +111,7 @@ export function LeadForm(p: LeadFormProps) {
   const variant = p.variant ?? 'full';
   const intl = p.type === 'international';
   const [country, setCountry] = useState(intl ? '' : 'India');
-  const [mode, setMode] = useState(intl ? 'Online' : '');
+  const [mode, setMode] = useState(intl ? 'Online' : p.defaultMode ?? '');
   const { state, error, submit } = useSubmit('/api/enquiry', p.type ?? 'enquiry', p.source);
   const id = (n: string) => `${p.source.replace(/\W+/g, '-').toLowerCase()}-${n}`;
   const outside = country && country !== 'India';
@@ -119,6 +122,8 @@ export function LeadForm(p: LeadFormProps) {
       <Msg state={state} error={error} success={success} />
       <input type="hidden" name="type" value={intl || outside ? 'international' : p.type === 'demo' ? 'demo' : 'enquiry'} />
       {p.defaultCourse && <input type="hidden" name="course" value={p.defaultCourse} />}
+      {Object.entries(p.hiddenFields ?? {}).map(([k, v]) => <input key={k} type="hidden" name={k} value={v} />)}
+      {p.defaultTiming && variant !== 'full' && <input type="hidden" name="timing" value={p.defaultTiming} />}
       <F label="Full name" icon="user" htmlFor={id('name')}><input id={id('name')} name="name" type="text" required autoComplete="name" placeholder="Your name" /></F>
       <F label="Country" icon="globe" htmlFor={id('country')}>
         <Sel id={id('country')} name="country" options={countries.map(([c]) => c)} value={country} placeholder={intl ? 'Select your country' : undefined} onChange={setCountry} required={intl} />
@@ -132,7 +137,7 @@ export function LeadForm(p: LeadFormProps) {
       {variant === 'full' && <F label="Course type" icon="cap" htmlFor={id('courseType')}><Sel id={id('courseType')} name="courseType" options={COURSE_TYPES} value={p.defaultExam ? 'Exam preparation' : undefined} placeholder="Select course type" /></F>}
       <F label="Online / Offline" icon="laptop" htmlFor={id('mode')}><Sel id={id('mode')} name="mode" options={['Online', 'Offline']} value={mode} placeholder="Select" onChange={setMode} /></F>
       {mode === 'Offline' && p.branches.length > 0 && (
-        <F label="Preferred centre" icon="pin" htmlFor={id('branch')}><Sel id={id('branch')} name="branch" options={p.branches} /></F>
+        <F label="Preferred centre" icon="pin" htmlFor={id('branch')}><Sel id={id('branch')} name="branch" options={p.branches} value={p.defaultBranch} /></F>
       )}
       {variant === 'full' && <F label="Group / One-to-One" icon="users" htmlFor={id('format')}><Sel id={id('format')} name="format" options={['Group', 'One-to-One']} value={p.defaultFormat} placeholder="Select" /></F>}
       {variant === 'full' && <F label="Exam preparation" icon="target" htmlFor={id('exam')}><Sel id={id('exam')} name="exam" options={EXAMS} value={p.defaultExam} placeholder="Select exam (if any)" /></F>}

@@ -354,3 +354,28 @@ export const locations = pgTable('locations', {
   active: boolean('active').notNull().default(true),
   ...timestamps,
 });
+
+/** Upcoming batches (/upcoming-batches and the course pages). Past batches hide themselves after the start date. */
+export const batches = pgTable('batches', {
+  id: serial('id').primaryKey(),
+  courseId: integer('course_id').references(() => courses.id, { onDelete: 'set null' }),
+  /** custom course name; empty = the linked course's title */
+  title: text('title').default(''),
+  level: text('level').default(''),
+  startDate: timestamp('start_date', { withTimezone: true }).notNull(),
+  days: text('days').default(''),
+  /** "HH:MM" 24h */
+  timeFrom: text('time_from').default(''),
+  timeTo: text('time_to').default(''),
+  duration: text('duration').default(''),
+  mode: text('mode').notNull().default('Online'),
+  branchId: integer('branch_id').references(() => branches.id, { onDelete: 'set null' }),
+  location: text('location').default(''),
+  seats: integer('seats'),
+  totalSeats: integer('total_seats'),
+  badge: text('badge').default(''),
+  note: text('note').default(''),
+  sort: integer('sort').notNull().default(0),
+  active: boolean('active').notNull().default(true),
+  ...timestamps,
+}, (t) => [index('batches_start_idx').on(t.startDate)]);

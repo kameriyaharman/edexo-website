@@ -20,7 +20,9 @@ export interface Resource {
   table: any; // drizzle table
   fields: ResourceField[];
   columns: string[];
-  orderBy: 'sort' | 'publishedAt' | 'createdAt';
+  orderBy: 'sort' | 'publishedAt' | 'createdAt' | 'startDate';
+  /** shows a "Duplicate" button (copy a record, then change a few fields) */
+  duplicable?: boolean;
   slugFrom?: string;
   viewUrl?: (row: any) => string | null;
 }
@@ -318,6 +320,35 @@ resources.push({
     { name: 'permanent', label: 'Permanent (301) — recommended for SEO', type: 'boolean' },
     { name: 'active', label: 'Active', type: 'boolean' },
     { name: 'sort', label: 'Order', type: 'number' },
+  ],
+});
+
+const DAYS = ['Monday to Friday', 'Monday to Saturday', 'Mon, Wed, Fri', 'Tue, Thu, Sat', 'Saturday & Sunday (Weekend)', 'Sunday only', 'Daily'];
+const DURATIONS = ['1 month', '6 weeks', '2 months', '2.5 months', '3 months', '4 months', '6 months'];
+
+resources.push({
+  key: 'batches', label: 'Upcoming batches', singular: 'batch', table: schema.batches, orderBy: 'startDate', duplicable: true,
+  description: 'Batches shown on /upcoming-batches (and on course pages). A batch hides itself after its start date — for the next batch, open one and click "Duplicate", then change the date.',
+  columns: ['courseId', 'startDate', 'timeFrom', 'mode', 'seats', 'active'],
+  viewUrl: () => '/upcoming-batches',
+  fields: [
+    { name: 'courseId', label: 'Course', type: 'select', optionsFrom: ['courses', 'title'], help: 'Fills the course name and links "Book Free Demo" to this course.' },
+    { name: 'title', label: 'Course name on the site (optional)', type: 'text', placeholder: 'e.g. German A1 — Fast Track', help: 'Leave empty to use the course name.' },
+    { name: 'level', label: 'Level (optional)', type: 'text', placeholder: 'A1', help: 'Leave empty to use the course level.' },
+    { name: 'startDate', label: 'Batch start date', type: 'date', required: true, group: 'Date & time' },
+    { name: 'days', label: 'Days', type: 'text', placeholder: 'Monday to Friday', suggestions: DAYS, group: 'Date & time', help: 'Pick one or type your own.' },
+    { name: 'timeFrom', label: 'Class starts at', type: 'time', group: 'Date & time' },
+    { name: 'timeTo', label: 'Class ends at', type: 'time', group: 'Date & time' },
+    { name: 'duration', label: 'Course duration', type: 'text', placeholder: '3 months', suggestions: DURATIONS, group: 'Date & time', help: 'Leave empty to use the course duration.' },
+    { name: 'mode', label: 'Mode', type: 'select', required: true, options: ['Online', 'Offline', 'Online & Offline'].map((v) => ({ value: v, label: v })), group: 'Mode, centre & seats' },
+    { name: 'branchId', label: 'Centre (offline batches)', type: 'select', optionsFrom: ['branches', 'name'], group: 'Mode, centre & seats' },
+    { name: 'location', label: 'Location text (optional)', type: 'text', placeholder: 'Live on Zoom', group: 'Mode, centre & seats', help: 'Overrides the location shown. Empty = centre name, or "Live online" for online batches.' },
+    { name: 'seats', label: 'Available seats', type: 'number', group: 'Mode, centre & seats', help: 'Seats still open. 0 = "Batch full". Empty = hide the seat count.' },
+    { name: 'totalSeats', label: 'Total seats (optional)', type: 'number', group: 'Mode, centre & seats', help: 'Shows a small "filled" bar, e.g. 8 of 12 left.' },
+    { name: 'badge', label: 'Badge (optional)', type: 'text', placeholder: 'Weekend batch', suggestions: ['New', 'Weekend batch', 'Fast track', 'Evening batch', 'Few seats left', 'Kids batch'] },
+    { name: 'note', label: 'Short note (optional)', type: 'text', placeholder: 'Goethe exam prep included' },
+    { name: 'active', label: 'Show on site', type: 'boolean' },
+    { name: 'sort', label: 'Order (only for batches on the same date)', type: 'number' },
   ],
 });
 

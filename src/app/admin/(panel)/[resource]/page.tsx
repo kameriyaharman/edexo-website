@@ -3,12 +3,13 @@ import { notFound } from 'next/navigation';
 import { asc, desc } from 'drizzle-orm';
 import { db, schema } from '@/db';
 import { getResource } from '@/admin/resources';
-import { toggleActive } from '@/admin/actions';
+import { duplicateRecord, toggleActive } from '@/admin/actions';
+import { fmtStart, fmtTiming, todayIst } from '@/lib/batches';
 import { formatDate, inr } from '@/lib/format';
 import { Icon } from '@/components/Icon';
 import { iconForAdminPath } from '@/admin/nav';
 
-type Props = { params: Promise<{ resource: string }>; searchParams: Promise<{ deleted?: string; location?: string; q?: string; program?: string }> };
+type Props = { params: Promise<{ resource: string }>; searchParams: Promise<{ deleted?: string; copied?: string; location?: string; q?: string; program?: string }> };
 
 export async function generateMetadata({ params }: Props) {
   return { title: getResource((await params).resource)?.label ?? 'Admin' };
@@ -19,8 +20,15 @@ export default async function ResourceList({ params, searchParams }: Props) {
   if (!res) notFound();
   const sp = await searchParams;
   const t = res.table;
-  const order = res.orderBy === 'sort' ? [asc(t.sort), asc(t.id)] : res.orderBy === 'publishedAt' ? [desc(t.publishedAt), desc(t.id)] : [asc(t.id)];
+  const order = res.orderBy === 'sort' ? [asc(t.sort), asc(t.id)] : res.orderBy === 'publishedAt' ? [desc(t.publishedAt), desc(t.id)]
+    : res.orderBy === 'startDate' ? [asc(t.startDate), asc(t.sort), asc(t.id)] : [asc(t.id)];
   let rows: any[] = await db.select().from(t).orderBy(...order);
+  const today = todayIst();
+  if (res.key === 'batches') {
+    // upcoming first (soonest on top), then batches that have already started (latest first)
+    const up = rows.filter((r) => r.startDate >= today);
+    rows = [...up, ...rows.filter((r) => r.startDate < today).reverse()];
+  }
   if (res.key === 'menu' && sp.location) rows = rows.filter((r) => r.location === sp.location);
   if (res.key === 'menu') {
     // children directly under their parent
@@ -32,6 +40,8 @@ export default async function ResourceList({ params, searchParams }: Props) {
   if (q) rows = rows.filter((r) => res.fields.some((f) => ['text', 'textarea'].includes(f.type) && String(r[f.name] ?? '').toLowerCase().includes(q)));
   const icon = iconForAdminPath(`/admin/${res.key}`);
   const langs = ['courses', 'posts'].includes(res.key) ? Object.fromEntries((await db.select().from(schema.languages)).map((l) => [l.id, l.name])) : {};
+  const courseNames = res.key === 'batches' ? Object.fromEntries((await db.select({ id: schema.courses.id, title: schema.courses.title }).from(schema.courses)).map((c) => [c.id, c.title])) : {};
+  const branchNames = res.key === 'batches' ? Object.fromEntries((await db.select({ id: schema.branches.id, name: schema.branches.name }).from(schema.branches)).map((b) => [b.id, b.name])) : {};
   const menuLabels = res.key === 'menu' ? Object.fromEntries((await db.select().from(schema.menuItems)).map((m) => [m.id, m.label])) : {};
   const langFilter = sp.program;
   if (res.key === 'courses' && langFilter) rows = rows.filter((r) => String(r.languageId) === langFilter);
@@ -44,6 +54,16 @@ export default async function ResourceList({ params, searchParams }: Props) {
     if (col === 'showOnHome') return v ? <span className="pill-s on">Home</span> : '—';
     if (col === 'parentId') return v ? <span className="muted">↳ {menuLabels[v] ?? '—'}</span> : '—';
     if (col === 'priceOffline') return v === null ? '—' : inr(v);
+    if (res!.key === 'batches') {
+      if (col === 'courseId') return r.title || courseNames[v] || '(no course)';
+      if (col === 'startDate') {
+        const d = fmtStart(v); const past = v < today;
+        return <span style={{ whiteSpace: 'nowrap' }}>{d.full} {past ? <span className="pill-s off">Started — hidden</span> : <span className="pill-s on">Upcoming</span>}</span>;
+      }
+      if (col === 'timeFrom') return <span className="muted">{[r.days, fmtTiming(r.timeFrom, r.timeTo)].filter(Boolean).join(' · ') || '—'}</span>;
+      if (col === 'mode') return [v, r.mode !== 'Online' && branchNames[r.branchId]].filter(Boolean).join(' · ');
+      if (col === 'seats') return v === null ? '—' : Number(v) <= 0 ? <span className="pill-s off">Full</span> : `${v}${r.totalSeats ? ` / ${r.totalSeats}` : ''} left`;
+    }
     if (col === 'kind') return <span className="pill-s">{String(v)}</span>;
     if (col === 'active' || col === 'published' || col === 'featured') {
       if (col === 'featured') return v ? 'Yes' : '—';
@@ -70,6 +90,7 @@ export default async function ResourceList({ params, searchParams }: Props) {
         <div><h1><span className="a-title-ic"><Icon name={icon} size={22} /></span>{res.label}</h1>{res.description && <p>{res.description}</p>}</div>
         <div className="a-top-actions"><Link className="a-btn primary" href={`/admin/${res.key}/new`}><Icon name="sparkles" size={16} />Add {res.singular}</Link></div>
       </div>
+      {sp.copied && <p className="a-msg ok" style={{ marginBottom: 16 }}><Icon name="checkCircle" size={18} />Copy created.</p>}
       {sp.deleted && <p className="a-msg ok" style={{ marginBottom: 16 }}><Icon name="checkCircle" size={18} />Deleted.</p>}
       <form className="a-toolbar">
         {sp.location && <input type="hidden" name="location" value={sp.location} />}
@@ -104,6 +125,12 @@ export default async function ResourceList({ params, searchParams }: Props) {
                   <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
                     <div className="a-row-actions">
                       {res.viewUrl && <a className="a-btn sm" href={res.viewUrl(r) ?? '#'} target="_blank" rel="noopener noreferrer" aria-label="View on site"><Icon name="globe" size={14} />View</a>}
+                      {res.duplicable && (
+                        <form action={duplicateRecord}>
+                          <input type="hidden" name="__resource" value={res.key} /><input type="hidden" name="__id" value={r.id} />
+                          <button className="a-btn sm" type="submit" title="Make a copy, then change the date"><Icon name="layers" size={14} />Duplicate</button>
+                        </form>
+                      )}
                       <Link className="a-btn sm navy" href={`/admin/${res.key}/${r.id}`}><Icon name="pen" size={14} />Edit</Link>
                     </div>
                   </td>

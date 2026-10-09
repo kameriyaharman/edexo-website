@@ -169,6 +169,29 @@ export async function deleteRecord(fd: FormData) {
   redirect(`/admin/${res.key}?deleted=1`);
 }
 
+/** Copy a record (e.g. last month's batch) as a hidden draft, then open it for editing. */
+export async function duplicateRecord(fd: FormData) {
+  await requireAdmin();
+  const res = getResource(String(fd.get('__resource')));
+  const id = Number(fd.get('__id'));
+  if (!res?.duplicable || !id) return;
+  const [row] = await db.select().from(res.table).where(eq(res.table.id, id)).limit(1);
+  if (!row) return;
+  const { id: _id, createdAt: _c, updatedAt: _u, ...rest } = row as Record<string, unknown>;
+  if ('active' in rest) rest.active = false;
+  if ('startDate' in rest && rest.startDate instanceof Date) {
+    // suggest the same weekday one month later, never in the past
+    const d = new Date(rest.startDate);
+    const now = Date.now();
+    while (d.getTime() < now) d.setTime(d.getTime() + 28 * 86_400_000);
+    if (d.getTime() === (rest.startDate as Date).getTime()) d.setTime(d.getTime() + 28 * 86_400_000);
+    rest.startDate = d;
+  }
+  const [copy] = await db.insert(res.table).values(rest).returning({ id: res.table.id });
+  revalidatePath('/', 'layout');
+  redirect(`/admin/${res.key}/${copy.id}?copied=1`);
+}
+
 export async function toggleActive(fd: FormData) {
   await requireAdmin();
   const res = getResource(String(fd.get('__resource')));

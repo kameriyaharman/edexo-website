@@ -506,6 +506,28 @@ async function upgrades() {
     d.creditUrl = '';
   });
 
+  await apply('2026-10-batches', async (d) => {
+    if (d.batchesOnCourses === undefined) d.batchesOnCourses = true;
+    if (d.batchesLowSeats === undefined) d.batchesLowSeats = 5;
+    if (d.batchesKeepDays === undefined) d.batchesKeepDays = 0;
+    // header: "Upcoming Batches" inside the Language Programs dropdown, just above "All Courses & Fees"
+    const { rows: par } = await client.query("select id from menu_items where location = 'header' and parent_id is null and href = '/courses' limit 1");
+    const has = await client.query("select 1 from menu_items where href = '/upcoming-batches'");
+    if (!has.rows.length) {
+      if (par.length) {
+        const { rows: all } = await client.query("select id, sort from menu_items where parent_id = $1 and href = '/courses' limit 1", [par[0].id]);
+        const sort = all.length ? all[0].sort : 99;
+        if (all.length) await client.query('update menu_items set sort = sort + 1 where id = $1', [all[0].id]);
+        await client.query("insert into menu_items (label, href, location, parent_id, description, sort) values ('Upcoming Batches', '/upcoming-batches', 'header', $1, 'New batch dates & timings', $2)", [par[0].id, sort]);
+      }
+      const { rows: m } = await client.query("select coalesce(max(sort),0) as s from menu_items where location = 'footer_useful'");
+      await client.query("insert into menu_items (label, href, location, sort) values ('Upcoming Batches', '/upcoming-batches', 'footer_useful', $1)", [Number(m[0].s) + 1]);
+    }
+    for (const from of ['/new-batch', '/new-batches', '/batches', '/upcoming-batch', '/batch-schedule']) {
+      await client.query('insert into redirects (from_path, to_path, permanent, sort) values ($1, $2, true, 900) on conflict (from_path) do nothing', [from, '/upcoming-batches']);
+    }
+  });
+
   data._upgrades = [...done];
   await client.query('update settings set data = $1, updated_at = now() where id = 1', [JSON.stringify(data)]);
 }

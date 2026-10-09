@@ -2,7 +2,7 @@ import { cache } from 'react';
 import { eq } from 'drizzle-orm';
 import { db, schema } from '@/db';
 
-export type FieldType = 'text' | 'textarea' | 'lines' | 'markdown' | 'number' | 'boolean' | 'image' | 'select' | 'date' | 'url' | 'secret' | 'blocks';
+export type FieldType = 'text' | 'textarea' | 'lines' | 'markdown' | 'number' | 'boolean' | 'image' | 'select' | 'date' | 'url' | 'secret' | 'blocks' | 'time';
 
 export interface FieldDef {
   name: string;
@@ -18,6 +18,8 @@ export interface FieldDef {
   maxLength?: number;
   /** admin form card this field is shown in (defaults to "Details") */
   group?: string;
+  /** quick-pick values offered under a text input (the admin can still type anything) */
+  suggestions?: string[];
 }
 
 export interface SettingsGroup {
@@ -115,6 +117,21 @@ export const settingsGroups: SettingsGroup[] = [
       { name: 'blogEyebrow', label: 'Blog: small label', type: 'text' },
       { name: 'blogTitle', label: 'Blog: heading', type: 'text' },
       { name: 'branchesTitle', label: 'Centres: heading', type: 'text' },
+    ],
+  },
+  {
+    key: 'batches', title: 'Upcoming batches — page text',
+    description: 'Text for the /upcoming-batches page. The batches themselves are added in Courses → Upcoming batches.',
+    fields: [
+      { name: 'batchesTitle', label: 'Page heading', type: 'text', placeholder: 'Upcoming Batches' },
+      { name: 'batchesSubtitle', label: 'Text under the heading', type: 'textarea' },
+      { name: 'batchesEmpty', label: 'Text when no batch is listed', type: 'textarea', placeholder: 'New batches are being scheduled. Book a free demo and we will share the next start date on WhatsApp.' },
+      { name: 'batchesLowSeats', label: 'Show "Only X seats left" when seats are at or below', type: 'number', placeholder: '5' },
+      { name: 'batchesKeepDays', label: 'Keep a batch listed for this many days after it starts (0 = hide on the start date)', type: 'number', placeholder: '0' },
+      { name: 'batchesOnCourses', label: 'Also show upcoming batches on course and program pages', type: 'boolean' },
+      { name: 'batchesNote', label: 'Small note under the list', type: 'textarea', placeholder: 'Batch dates and timings may change. Our team confirms your seat before the batch starts.' },
+      { name: 'batchesSeoTitle', label: 'SEO title', type: 'text', maxLength: 60 },
+      { name: 'batchesSeoDescription', label: 'SEO description', type: 'textarea', maxLength: 160 },
     ],
   },
   {

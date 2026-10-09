@@ -14,7 +14,7 @@ const EXTRA_LABELS: Record<string, string> = {
   city: 'City', state: 'State', business: 'Current business', investment: 'Investment capacity', location: 'Preferred location',
   experience: 'Experience', position: 'Position', qualification: 'Qualification', linkedin: 'LinkedIn',
   intent: 'Wants', age: 'Age', field: 'Preferred field', score: '% / CGPA', year: 'Passing year', intake: 'Intake', degree: 'Degree',
-  langLevels: 'Language levels', preference: 'University preference', budget: 'Budget',
+  langLevels: 'Language levels', preference: 'University preference', budget: 'Budget', batch: 'Batch',
 };
 
 export default async function Enquiries({ searchParams }: { searchParams: Promise<LeadFilters & { page?: string }> }) {
