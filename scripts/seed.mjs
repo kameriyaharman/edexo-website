@@ -46,6 +46,23 @@ async function ensureAdmin() {
   console.log(`[seed] created admin user ${email}`);
 }
 
+// Password reset from Railway variables (keeps the password out of git).
+// ADMIN_RESET_PASSWORD = new password; ADMIN_RESET_EMAIL = which admin (default: first admin).
+// Only updates when the stored hash doesn't already match, so restarts are harmless.
+async function resetAdminPassword() {
+  const password = process.env.ADMIN_RESET_PASSWORD;
+  if (!password) return;
+  const email = (process.env.ADMIN_RESET_EMAIL || '').toLowerCase().trim();
+  const { rows } = email
+    ? await client.query('select id, email, password_hash from admin_users where lower(email) = $1', [email])
+    : await client.query('select id, email, password_hash from admin_users order by id limit 1');
+  if (!rows.length) { console.warn(`[seed] password reset: no admin found${email ? ` for ${email}` : ''}`); return; }
+  const admin = rows[0];
+  if (await bcrypt.compare(password, admin.password_hash)) { console.log(`[seed] password reset: ${admin.email} already up to date`); return; }
+  await client.query('update admin_users set password_hash = $1, updated_at = now() where id = $2', [await bcrypt.hash(password, 12), admin.id]);
+  console.log(`[seed] password reset: updated password for ${admin.email}`);
+}
+
 async function seedContent() {
   const { rows } = await client.query('select id from settings where id = 1');
   if (rows.length) { console.log('[seed] content already present'); return; }
@@ -536,6 +553,7 @@ try {
   await seedContent();
   await upgrades();
   await ensureAdmin();
+  await resetAdminPassword();
 } finally {
   await client.end();
 }
