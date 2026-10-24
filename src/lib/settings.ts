@@ -190,7 +190,7 @@ export const settingsGroups: SettingsGroup[] = [
     key: 'seo', title: 'SEO',
     fields: [
       { name: 'seoTitle', label: 'Home page title', type: 'text', maxLength: 70, help: 'Shown as the blue link in Google for the home page.' },
-      { name: 'seoDescription', label: 'Home page description', type: 'textarea', maxLength: 170, help: 'Also used for pages that have no description of their own.' },
+      { name: 'seoDescription', label: 'Home page description', type: 'textarea', maxLength: 200, help: 'Also used for pages that have no description of their own.' },
       { name: 'coursesSeoTitle', label: 'Courses & Fees page — title', type: 'text', maxLength: 70 },
       { name: 'coursesSeoDescription', label: 'Courses & Fees page — description', type: 'textarea', maxLength: 170 },
       { name: 'blogSeoTitle', label: 'Blog page — title', type: 'text', maxLength: 70 },
@@ -201,6 +201,17 @@ export const settingsGroups: SettingsGroup[] = [
       { name: 'robotsIndex', label: 'Allow Google to index the website', type: 'boolean', help: 'Keep ON for the live site. The Railway preview address is never indexed.' },
       { name: 'googleVerification', label: 'Google Search Console verification code', type: 'text', placeholder: 'content value of the google-site-verification tag' },
       { name: 'bingVerification', label: 'Bing Webmaster verification code', type: 'text' },
+    ],
+  },
+  {
+    key: 'rohini', title: 'German in Rohini page',
+    description: 'Landing page /german-language-course-in-rohini. Fees, batches, address and phone come automatically from Courses, Batches and Centres. Leave a field empty to use the built-in text.',
+    fields: [
+      { name: 'rohiniSeoTitle', label: 'Google title', type: 'text', maxLength: 70, placeholder: 'German Language Course in Rohini, Delhi – A1 to B2 | Edexo' },
+      { name: 'rohiniSeoDescription', label: 'Google description', type: 'textarea', maxLength: 200 },
+      { name: 'rohiniH1', label: 'Main heading (H1)', type: 'text', placeholder: 'German Language Course in Rohini, Delhi' },
+      { name: 'rohiniIntro', label: 'Intro paragraph', type: 'textarea', rows: 5 },
+      { name: 'rohiniFaqs', label: 'Extra FAQs', type: 'textarea', rows: 8, help: 'Question on the first line, answer on the next line(s); leave a blank line between FAQs. Added after the built-in FAQs.' },
     ],
   },
   {

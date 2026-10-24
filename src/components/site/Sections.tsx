@@ -36,7 +36,7 @@ export async function Hero() {
         </div>
         <div className="hero-visual" aria-hidden={!img}>
           <div className="circle" />
-          {img && <img className="photo" src={img} alt={`${s(st, 'siteName', 'Edexo')} language student`} fetchPriority="high" />}
+          {img && <img className="photo" src={img} alt={`German language classes at ${s(st, 'siteName', 'Edexo')} Rohini, Delhi`} fetchPriority="high" />}
           {left.length > 0 && (
             <div className="float-card c1">{left.map((l) => <div className="row" key={l}><Icon name="check" size={16} stroke={3} color="#1A2E8C" />{l}</div>)}</div>
           )}

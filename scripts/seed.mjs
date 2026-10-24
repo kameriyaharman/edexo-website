@@ -545,6 +545,82 @@ async function upgrades() {
     }
   });
 
+  await apply('2026-10-rohini-seo', async (d) => {
+    // client brief (24 Oct): rank for German language courses in Rohini, Delhi
+    d.seoTitle = 'German Language Institute in Rohini, Delhi | Edexo';
+    d.seoDescription = 'Looking for German language classes in Rohini, Delhi? Join Edexo for German A1, A2, B1 and B2 courses with online and offline learning options. Contact us for course fees and upcoming batches.';
+    d.heroTitle = 'German Language Courses in Rohini, Delhi –';
+    d.heroHighlight = 'A1 to C2';
+    d.heroText = 'Join Edexo, a German language institute in Rohini, Delhi, for German A1, A2, B1 and B2 courses — offline at our Rohini centre or live online. We also teach French, Spanish, Japanese, Chinese and English.';
+    d.germanEyebrow = 'German A1–C2 in Rohini';
+    d.germanTitle = 'German Language Classes in Rohini – A1 to C2';
+    d.germanText = 'German A1, A2, B1 and B2 courses for study, work, exams and everyday communication — offline at our Rohini centre or online. Same fees online and offline.';
+    d.aboutTitle = 'Why Choose Edexo for German in Rohini?';
+
+    const { rows: br } = await client.query("select address from branches where name ilike 'rohini%' order by sort limit 1");
+    const addr = br[0]?.address || 'Prashant Vihar, Sector 14, Rohini, New Delhi';
+    const courseSeo = {
+      'german-a1-course': ['German A1 Course in Rohini, Delhi – Fees & Batches | Edexo', 'Start German from zero with the German A1 course at Edexo Rohini, Delhi — offline classes at our Prashant Vihar centre or live online. Fees, batches & free demo.'],
+      'german-a2-course': ['German A2 Course in Rohini, Delhi – Fees & Batches | Edexo', 'German A2 course in Rohini, Delhi for learners who finished A1 — offline at Edexo Rohini or live online. Check fees, upcoming batches and book a free demo.'],
+      'german-b1-course': ['German B1 Course in Rohini, Delhi – Fees & Batches | Edexo', 'German B1 course in Rohini, Delhi for study, work and Ausbildung in Germany — offline at Edexo Rohini or online, with exam practice. Fees, batches & free demo.'],
+      'german-b2-course': ['German B2 Course in Rohini, Delhi – Fees & Batches | Edexo', 'German B2 course in Rohini, Delhi — upper-intermediate German for university, jobs and B2 exams. Offline at Edexo Rohini or live online. Fees & batches.'],
+      'german-c1-course': ['German C1 Course in Rohini, Delhi & Online | Edexo', 'Advanced German C1 course at Edexo Rohini, Delhi or live online — academic and professional German with exam preparation. Fees, batches & free demo.'],
+      'german-c2-course': ['German C2 Course in Rohini, Delhi & Online | Edexo', 'German C2 mastery course at Edexo Rohini, Delhi or live online — precise, nuanced German for academic and professional use. Fees & free demo.'],
+    };
+    for (const [slug, [title, desc]] of Object.entries(courseSeo)) {
+      await client.query('update courses set seo_title = $2, seo_description = $3, updated_at = now() where slug = $1', [slug, title, desc]);
+    }
+    await client.query("update languages set seo_title = 'German Language Course A1–C2 in Delhi (Rohini) & Online | Edexo', updated_at = now() where slug = 'german-language-course'");
+    // the general Rohini area page targets all languages; the new page owns the German keywords
+    await client.query("update locations set seo_title = 'Foreign Language Classes in Rohini, Delhi – French, Spanish & More | Edexo', updated_at = now() where slug = 'language-classes-in-rohini'");
+
+    // menus: header Language Programs dropdown + footer
+    const path = '/german-language-course-in-rohini';
+    const has = await client.query('select 1 from menu_items where href = $1', [path]);
+    if (!has.rows.length) {
+      const { rows: par } = await client.query("select id from menu_items where location = 'header' and parent_id is null and href = '/courses' limit 1");
+      if (par.length) {
+        const { rows: g } = await client.query("select sort from menu_items where parent_id = $1 and href = '/german-language-course' limit 1", [par[0].id]);
+        const after = g.length ? g[0].sort : 0;
+        await client.query('update menu_items set sort = sort + 1 where parent_id = $1 and sort > $2', [par[0].id, after]);
+        await client.query("insert into menu_items (label, href, location, parent_id, description, sort) values ('German Classes in Rohini', $1, 'header', $2, 'Offline & online, A1–B2', $3)", [path, par[0].id, after + 1]);
+      }
+      const { rows: m } = await client.query("select coalesce(min(sort),0) as s from menu_items where location = 'footer_courses'");
+      await client.query("insert into menu_items (label, href, location, sort) values ('German Classes in Rohini', $1, 'footer_courses', $2)", [path, Number(m[0].s) - 1]);
+    }
+    for (const from of ['/german-classes-in-rohini', '/german-course-in-rohini', '/german-institute-in-rohini', '/german-language-institute-in-rohini', '/german-language-classes-in-rohini', '/german-classes-rohini']) {
+      await client.query('insert into redirects (from_path, to_path, permanent, sort) values ($1, $2, true, 950) on conflict (from_path) do nothing', [from, path]);
+    }
+
+    // home page FAQs (shown first)
+    const homeFaqs = [
+      ['Where is Edexo\'s German language institute in Rohini?', `Our Rohini centre is at ${addr}. You can visit for a free German demo class, or join our live online classes from anywhere.`],
+      ['Which German courses can I join in Rohini?', 'We offer German A1, A2, B1 and B2 courses — and C1 and C2 — as offline classes at our Rohini centre and as live online classes. See the German Language Course in Rohini page for fees and upcoming batches.'],
+      ['Are German fees the same for online and offline classes?', 'Yes. German course fees are the same for online and offline classes. The full fee table is on our Courses & Fees page.'],
+    ];
+    for (const [i, [q, a]] of homeFaqs.entries()) {
+      const ex = await client.query('select 1 from faqs where question = $1', [q]);
+      if (!ex.rows.length) await client.query("insert into faqs (question, answer, group_name, show_on_home, sort) values ($1, $2, 'German in Rohini', true, $3)", [q, a, -10 + i]);
+    }
+  });
+
+  await apply('2026-10-image-speed', async (d) => {
+    // logos and favicon load on every page — shrink oversized ones (keeps transparency)
+    const jobs = [['logoId', 'logo'], ['logoWhiteId', 'logo'], ['faviconId', 'icon']];
+    for (const [key, kind] of jobs) {
+      const id = Number(d[key]);
+      if (!id) continue;
+      const { rows } = await client.query('select data, mime, size from media where id = $1', [id]);
+      const r = rows[0];
+      if (!r || r.size < 40000 || !/^image\/(png|jpe?g|webp)$/.test(r.mime)) continue;
+      const out = kind === 'icon'
+        ? await sharp(r.data).resize(256, 256, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } }).png({ compressionLevel: 9, palette: true }).toBuffer()
+        : await sharp(r.data).resize({ width: 640, withoutEnlargement: true }).webp({ quality: 90, alphaQuality: 100 }).toBuffer();
+      const mime = kind === 'icon' ? 'image/png' : 'image/webp';
+      if (out.length < r.size) await client.query('update media set data = $1, mime = $2, size = $3 where id = $4', [out, mime, out.length, id]);
+    }
+  });
+
   data._upgrades = [...done];
   await client.query('update settings set data = $1, updated_at = now() where id = 1', [JSON.stringify(data)]);
 }

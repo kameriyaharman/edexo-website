@@ -124,7 +124,9 @@ export async function LocationPage({ l }: { l: Loc }) {
           <div className="wrap">
             <div className="section-head"><span className="eyebrow"><Icon name="wallet" size={15} />German A1–C2</span><h2 className="h2">German Course Fees for {place}</h2>{german.feeNote && <p>{german.feeNote}</p>}</div>
             <FeeTable p={german} />
-            <p className="center" style={{ marginTop: 24 }}><Link className="btn btn-navy" href="/courses"><Icon name="wallet" size={17} />All Courses &amp; Fees</Link></p>
+            <p className="center" style={{ marginTop: 24, display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+              {/rohini/i.test(branch?.name ?? '') && <Link className="btn btn-orange" href="/german-language-course-in-rohini"><Icon name="pin" size={17} />German Course at our Rohini Centre</Link>}
+              <Link className="btn btn-navy" href="/courses"><Icon name="wallet" size={17} />All Courses &amp; Fees</Link></p>
           </div>
         </section>
       )}

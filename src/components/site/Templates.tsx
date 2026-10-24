@@ -13,6 +13,9 @@ import { CtaBand, Disclaimer, FaqList, FaqSection, FeeTable, HighlightGrid, Tick
 import { CareerForm, FranchiseForm } from './LeadForms';
 import { JsonLd } from './StructuredData';
 import { BatchesStrip } from './Batches';
+import { ROHINI_GERMAN_PATH } from './GermanRohiniPage';
+
+const isGerman = (slug?: string | null, category?: string | null) => !!slug && slug.startsWith('german') && category !== 'kids';
 
 type PageRow = Awaited<ReturnType<typeof getPagesByKind>>[number];
 
@@ -147,12 +150,13 @@ export async function ProgramPage({ p }: { p: Program }) {
             <HighlightGrid items={splitLines(p.highlights)} cols={2} />
           </div>
           <aside className="card program-aside">
-            {img && <img src={img} alt={`${p.name} classes at Edexo`} />}
+            {img && <img src={img} alt={isGerman(p.slug, p.category) ? 'German language course at Edexo, Rohini Delhi' : `${p.name} classes at Edexo, Delhi`} />}
             <h3>Start learning {p.name}</h3>
             <Ticks items={['Free demo class', 'Online & offline batches', 'Group & one-to-one', `${p.courses.length} ${p.courses.length === 1 ? 'level' : 'levels'}`]} />
             <Link className="btn btn-orange full" href={`/enroll?program=${p.slug}`} data-cta="program_enroll"><Icon name="cap" size={18} />Enroll Now</Link>
             <Link className="btn btn-enroll full" href="#enquiry" data-cta="program_demo"><Icon name="video" size={18} />Book Free Demo</Link>
             {wa && <a className="btn btn-wa full" href={wa} target="_blank" rel="noopener noreferrer"><Icon name="whatsapp" size={18} />WhatsApp Us</a>}
+            {isGerman(p.slug, p.category) && <Link className="aside-link" href={ROHINI_GERMAN_PATH}><Icon name="pin" size={15} />German classes in Rohini, Delhi</Link>}
           </aside>
         </div>
       </section>
@@ -224,7 +228,7 @@ export async function CoursePage({ c, program }: { c: CourseRow; program: Progra
       <section className="section">
         <div className="wrap course-layout">
           <div className="course-main">
-            {img && <img className="course-cover" src={img} alt={`${c.title} course at Edexo`} />}
+            {img && <img className="course-cover" src={img} alt={isGerman(program?.slug, program?.category) ? `${c.title} course — German classes at Edexo, Rohini Delhi` : `${c.title} course at Edexo, Delhi`} />}
             <div className="prose" dangerouslySetInnerHTML={{ __html: renderMarkdown(c.description) }} />
             {c.whoShouldJoin && block('Who should join', 'users', <p>{c.whoShouldJoin}</p>)}
             {splitLines(c.outcomes).length > 0 && block('Learning outcomes', 'target', <Ticks items={splitLines(c.outcomes)} />)}
@@ -267,6 +271,7 @@ export async function CoursePage({ c, program }: { c: CourseRow; program: Progra
             <Link className="btn btn-enroll full" href="#enquiry" data-cta="course_demo"><Icon name="video" size={18} />Book Free Demo</Link>
             {wa && <a className="btn btn-wa full" href={wa} target="_blank" rel="noopener noreferrer"><Icon name="whatsapp" size={18} />WhatsApp Us</a>}
             <Link className="aside-link" href="#enquiry" data-cta="course_details"><Icon name="file" size={15} />Get course details</Link>
+            {program && isGerman(program.slug, program.category) && <Link className="aside-link" href={ROHINI_GERMAN_PATH}><Icon name="pin" size={15} />{c.title} classes in Rohini, Delhi</Link>}
           </aside>
         </div>
       </section>

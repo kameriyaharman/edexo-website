@@ -58,7 +58,7 @@ export default async function PostPage({ params }: Props) {
           {relatedCourses.length > 0 && (
             <div className="c-block">
               <h2 className="h3">Related courses</h2>
-              <div className="related-chips">{relatedCourses.map((c) => <Link key={c.id} href={`/${c.slug}`}>{c.title}</Link>)}{program && <Link href={`/${program.slug}`}>All {program.name} levels</Link>}</div>
+              <div className="related-chips">{relatedCourses.map((c) => <Link key={c.id} href={`/${c.slug}`}>{c.title}</Link>)}{program && <Link href={`/${program.slug}`}>All {program.name} levels</Link>}{/german/i.test(`${p.title} ${p.category ?? ''} ${program?.name ?? ''}`) && <Link href="/german-language-course-in-rohini">German classes in Rohini, Delhi</Link>}</div>
             </div>
           )}
         </div>

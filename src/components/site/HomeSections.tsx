@@ -50,7 +50,7 @@ export async function WhySection() {
             <p>{s(st, 'aboutText')}</p>
             <Link className="btn btn-navy" href="/about"><Icon name="info" size={17} />About Edexo<Icon name="arrowRight" size={16} /></Link>
           </div>
-          {img && <img className="why-img" src={img} alt={`Live class at ${s(st, 'siteName', 'Edexo')}`} loading="lazy" />}
+          {img && <img className="why-img" src={img} alt={`Live German language class at ${s(st, 'siteName', 'Edexo')}, Rohini Delhi`} loading="lazy" />}
         </div>
         <div className="why-grid">
           {reasons.map((r) => (
@@ -84,7 +84,8 @@ export async function GermanSection() {
           ))}
         </div>
         <p className="center" style={{ marginTop: 32 }}>
-          <Link className="btn btn-orange" href={`/${p.slug}`}><Icon name="cap" size={18} />Explore German Program</Link>
+          <Link className="btn btn-orange" href={`/${p.slug}`}><Icon name="cap" size={18} />Explore German Program</Link>{' '}
+          <Link className="btn btn-navy" href="/german-language-course-in-rohini"><Icon name="pin" size={18} />German Classes in Rohini</Link>
         </p>
       </div>
     </section>

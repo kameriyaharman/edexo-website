@@ -97,7 +97,7 @@ export function ProgramCard({ p, blurb }: { p: Program; blurb?: string }) {
   return (
     <Link href={`/${p.slug}`} className="card program-card">
       <div className="program-media">
-        {img ? <img src={img} alt={`${p.name} classes at Edexo`} loading="lazy" /> : <div className="noimg" />}
+        {img ? <img src={img} alt={`${p.name} classes at Edexo, Delhi`} loading="lazy" /> : <div className="noimg" />}
         <span className="lang-badge">{p.code}</span>
       </div>
       <div className="program-body">

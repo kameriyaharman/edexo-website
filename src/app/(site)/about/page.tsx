@@ -23,7 +23,7 @@ export default async function AboutPage() {
       {p && (
         <section className="section">
           <div className="wrap">
-            {img && <img className="course-cover" src={img} alt="" />}
+            {img && <img className="course-cover" src={img} alt="Edexo German & foreign language institute, Delhi" />}
             <div className="prose" dangerouslySetInnerHTML={{ __html: renderMarkdown(p.content) }} />
             <HighlightGrid title={p.highlightsTitle} items={splitLines(p.highlights)} />
           </div>
