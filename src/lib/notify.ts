@@ -2,6 +2,9 @@ import 'server-only';
 import { getSettings, s, type Settings } from '@/lib/settings';
 import { leadId } from '@/lib/format';
 import { siteUrl } from '@/lib/seo';
+import { leadRef } from '@/lib/payments';
+import { EMAIL_DEFAULTS } from '@/lib/email-defaults';
+export { EMAIL_DEFAULTS };
 
 /**
  * New-lead alerts to the institute — free services only:
@@ -49,30 +52,68 @@ function rows(l: LeadForAlert): [string, string][] {
 
 const esc = (v: string) => v.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]!));
 
-function subject(l: LeadForAlert) {
-  const what = l.course || l.language || TYPE_LABEL[l.type] || 'Enquiry';
-  return `${l.notes?.startsWith('Possible spam') ? '[Possible spam] ' : ''}New ${TYPE_LABEL[l.type] ?? 'enquiry'}: ${l.name} — ${what} (${leadId(l.id)})`;
+/* ---------- email templates (editable in Admin → Lead alerts) ---------- */
+
+
+const tpl = (st: Settings, k: keyof typeof EMAIL_DEFAULTS) => s(st, k).trim() || EMAIL_DEFAULTS[k];
+const isSpam = (l: LeadForAlert) => !!l.notes?.startsWith('Possible spam');
+
+type Vars = Record<string, string>;
+
+function leadVars(st: Settings, l: LeadForAlert, more: Vars = {}): Vars {
+  const r = Object.fromEntries(rows(l));
+  const thankYou = l.id && !['franchise', 'ausbildung', 'study', 'career'].includes(l.type) ? `${siteUrl()}/thank-you/${leadRef(l.id)}` : siteUrl();
+  return {
+    site: s(st, 'siteName', 'Edexo'), sitePhone: s(st, 'primaryPhone'), siteEmail: s(st, 'email', 'info@edexo.in'), siteUrl: siteUrl(),
+    leadId: leadId(l.id), type: TYPE_LABEL[l.type] ?? 'enquiry', name: l.name, firstName: l.name.trim().split(/\s+/)[0] || l.name,
+    phone: l.phone, email: l.email ?? '', country: l.country ?? '', language: l.language ?? '', level: l.level ?? '',
+    course: l.course || l.language || TYPE_LABEL[l.type] || 'your course', mode: l.mode ?? '', centre: l.branch ?? '',
+    batch: r['Batch'] ?? l.format ?? '', timing: l.timing ?? '', message: l.message ?? '', source: l.source ?? '',
+    adminLink: leadUrl(l), thankYouLink: thankYou, date: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
+    ...more,
+  };
 }
 
-function emailHtml(l: LeadForAlert, st: Settings) {
-  const wa = digits(l.phone);
-  const waLink = wa ? `https://wa.me/${wa.length === 10 ? '91' + wa : wa}` : '';
-  const tr = rows(l).map(([k, v]) =>
+/** Plain-text fill: {{name}} → value. Unknown placeholders become empty. */
+const fill = (t: string, v: Vars) => t.replace(/\{\{\s*(\w+)\s*\}\}/g, (_, k) => (k === 'details' ? '\u0000details\u0000' : v[k] ?? ''));
+
+function detailsTable(l: LeadForAlert) {
+  return `<table style="border-collapse:collapse;width:100%;font-size:14px;margin:4px 0 16px">${rows(l).map(([k, v]) =>
     `<tr><td style="padding:8px 12px;border-bottom:1px solid #ECEEF4;color:#4F566B;white-space:nowrap;vertical-align:top">${esc(k)}</td>` +
-    `<td style="padding:8px 12px;border-bottom:1px solid #ECEEF4;color:#0B1640;white-space:pre-wrap">${esc(String(v))}</td></tr>`).join('');
-  const btn = (href: string, label: string, bg: string) =>
-    `<a href="${esc(href)}" style="display:inline-block;margin:0 8px 8px 0;padding:10px 16px;border-radius:8px;background:${bg};color:#fff;text-decoration:none;font-weight:600">${label}</a>`;
-  return `<div style="font-family:Arial,Helvetica,sans-serif;max-width:640px;margin:0 auto;color:#0B1640">
-<div style="background:#1B2A6B;color:#fff;padding:16px 20px;border-radius:10px 10px 0 0;font-size:18px;font-weight:700">New lead on ${esc(s(st, 'siteName', 'Edexo'))} website</div>
-<div style="border:1px solid #ECEEF4;border-top:0;border-radius:0 0 10px 10px;padding:16px 20px">
-<p style="margin:0 0 14px">${btn(leadUrl(l), 'Open in admin', '#C24E17')}${waLink ? btn(waLink, 'WhatsApp student', '#1FA855') : ''}${btn('tel:' + l.phone.replace(/[^\d+]/g, ''), 'Call', '#1B2A6B')}</p>
-<table style="border-collapse:collapse;width:100%;font-size:14px">${tr}</table>
-<p style="color:#4F566B;font-size:12px;margin:16px 0 0">Sent automatically by the website. Reply to this email to answer the student${l.email ? '' : ' (no email given — use phone/WhatsApp)'}.</p>
-</div></div>`;
+    `<td style="padding:8px 12px;border-bottom:1px solid #ECEEF4;color:#0B1640;white-space:pre-wrap">${esc(String(v))}</td></tr>`).join('')}</table>`;
 }
 
-function emailText(l: LeadForAlert) {
-  return rows(l).map(([k, v]) => `${k}: ${v}`).join('\n') + `\n\nOpen in admin: ${leadUrl(l)}`;
+const btn = (href: string, label: string, bg: string) =>
+  `<a href="${esc(href)}" style="display:inline-block;margin:0 8px 8px 0;padding:10px 16px;border-radius:8px;background:${bg};color:#fff;text-decoration:none;font-weight:600">${esc(label)}</a>`;
+
+/** Template text → HTML: blank line = new paragraph, [Label](url) on its own line = button, {{details}} = lead table. */
+function bodyHtml(text: string, v: Vars, l: LeadForAlert | null, accent: string) {
+  const para = (raw: string) => {
+    const p = raw.trim();
+    if (!p) return '';
+    return p.split('\n').map((line) => {
+      const ln = line.trim();
+      if (/^(\[[^\]]+\]\([^)\s]+\)\s*)+$/.test(ln)) // a line with only links → buttons
+        return `<p style="margin:0 0 14px">${[...ln.matchAll(/\[([^\]]+)\]\(([^)\s]+)\)/g)].map((m) => btn(m[2], m[1], accent)).join('')}</p>`;
+      return `<p style="margin:0 0 ${line === p.split('\n').at(-1) ? 14 : 2}px;line-height:1.55">${esc(line).replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, `<a href="$2" style="color:${accent}">$1</a>`) || '&nbsp;'}</p>`;
+    }).join('');
+  };
+  return fill(text, v).split('\u0000details\u0000').map((chunk) => chunk.split(/\n{2,}/).map(para).join(''))
+    .join(l ? detailsTable(l) : '');
+}
+
+function bodyText(text: string, v: Vars, l: LeadForAlert | null) {
+  const details = l ? rows(l).map(([k, val]) => `${k}: ${val}`).join('\n') : '';
+  return fill(text, v).replace(/\u0000details\u0000/g, details).replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, '$1: $2');
+}
+
+function layout(st: Settings, heading: string, inner: string, footer: string) {
+  const color = s(st, 'emailBrandColor').trim() || '#1B2A6B';
+  return `<div style="font-family:Arial,Helvetica,sans-serif;max-width:640px;margin:0 auto;color:#0B1640;font-size:15px">
+<div style="background:${esc(color)};color:#fff;padding:16px 20px;border-radius:10px 10px 0 0;font-size:18px;font-weight:700">${esc(heading)}</div>
+<div style="border:1px solid #ECEEF4;border-top:0;border-radius:0 0 10px 10px;padding:18px 20px">${inner}
+${footer ? `<p style="color:#4F566B;font-size:12px;margin:18px 0 0;white-space:pre-wrap">${esc(footer)}</p>` : ''}
+</div></div>`;
 }
 
 /** "Edexo Website <website@edexo.in>" → { name, email } */
@@ -92,24 +133,80 @@ async function post(url: string, headers: Record<string, string>, body: unknown)
   }
 }
 
-export async function sendLeadEmail(st: Settings, l: LeadForAlert, toOverride?: string[]) {
-  const to = toOverride ?? list(s(st, 'notifyEmailTo') || s(st, 'email'));
-  const key = s(st, 'emailApiKey').trim();
-  const from = parseFrom(s(st, 'emailFrom') || `Edexo Website <${s(st, 'email', 'info@edexo.in')}>`);
-  if (!to.length) throw new Error('No "send to" email address set.');
-  if (!key) throw new Error('Email API key is not set.');
-  const replyTo = l.email && /@/.test(l.email) ? l.email : undefined;
-  const subj = subject(l), html = emailHtml(l, st), text = emailText(l);
-  if (s(st, 'emailProvider', 'brevo') === 'resend') {
+/** Send one email through the chosen free HTTP API (Resend or Brevo). */
+export async function sendMail(st: Settings, m: { to: string[]; subject: string; html: string; text: string; replyTo?: { email: string; name?: string } }) {
+  const key = (s(st, 'emailApiKey').trim() || process.env.RESEND_API_KEY || process.env.BREVO_API_KEY || '').trim();
+  const provider = s(st, 'emailProvider').trim() || (key.startsWith('xkeysib-') ? 'brevo' : 'resend');
+  const from = parseFrom(s(st, 'emailFrom') || `${s(st, 'siteName', 'Edexo')} <${s(st, 'email', 'info@edexo.in')}>`);
+  if (!m.to.length) throw new Error('No "send to" email address set.');
+  if (!key) throw new Error('Email API key is not set (Admin → Lead alerts → Email service API key).');
+  if (provider === 'resend') {
     await post('https://api.resend.com/emails', { authorization: `Bearer ${key}` }, {
-      from: from.name ? `${from.name} <${from.email}>` : from.email, to, subject: subj, html, text, ...(replyTo ? { reply_to: replyTo } : {}),
+      from: from.name ? `${from.name} <${from.email}>` : from.email, to: m.to, subject: m.subject, html: m.html, text: m.text,
+      ...(m.replyTo ? { reply_to: m.replyTo.email } : {}),
     });
   } else {
     await post('https://api.brevo.com/v3/smtp/email', { 'api-key': key }, {
-      sender: { email: from.email, ...(from.name ? { name: from.name } : {}) }, to: to.map((email) => ({ email })),
-      subject: subj, htmlContent: html, textContent: text, ...(replyTo ? { replyTo: { email: replyTo, name: l.name } } : {}),
+      sender: { email: from.email, ...(from.name ? { name: from.name } : {}) }, to: m.to.map((email) => ({ email })),
+      subject: m.subject, htmlContent: m.html, textContent: m.text, ...(m.replyTo ? { replyTo: m.replyTo } : {}),
     });
   }
+}
+
+const instituteTo = (st: Settings) => list(s(st, 'notifyEmailTo') || s(st, 'email'));
+const accent = (st: Settings) => s(st, 'emailButtonColor').trim() || '#C24E17';
+
+/** New-lead email to the institute. */
+export async function sendLeadEmail(st: Settings, l: LeadForAlert, toOverride?: string[]) {
+  const v = leadVars(st, l);
+  const wa = digits(l.phone);
+  const buttons = `<p style="margin:0 0 16px">${btn(leadUrl(l), 'Open in admin', accent(st))}${wa ? btn(`https://wa.me/${wa.length === 10 ? '91' + wa : wa}`, 'WhatsApp student', '#1FA855') : ''}${btn('tel:' + l.phone.replace(/[^\d+]/g, ''), 'Call', '#1B2A6B')}</p>`;
+  const body = tpl(st, 'emailBodyTpl');
+  const html = layout(st, fill(tpl(st, 'emailHeadingTpl'), v), buttons + bodyHtml(body, v, l, accent(st)),
+    fill(tpl(st, 'emailFooterTpl'), v) + (l.email ? '' : '\n(No email given — use phone/WhatsApp.)'));
+  const text = bodyText(body, v, l) + `\n\nOpen in admin: ${leadUrl(l)}`;
+  const replyTo = l.email && /@/.test(l.email) ? { email: l.email, name: l.name } : undefined;
+  await sendMail(st, { to: toOverride ?? instituteTo(st), subject: (isSpam(l) ? '[Possible spam] ' : '') + fill(tpl(st, 'emailSubjectTpl'), v).replace(/\s+/g, ' ').trim(), html, text, replyTo });
+}
+
+/** Auto-reply to the student / applicant (only when they gave an email). */
+export async function sendStudentReply(st: Settings, l: LeadForAlert, toOverride?: string) {
+  const to = toOverride || l.email;
+  if (!to || !/@/.test(to)) return;
+  const v = leadVars(st, l);
+  const body = l.type === 'career' ? tpl(st, 'studentReplyCareerBodyTpl') : tpl(st, 'studentReplyBodyTpl');
+  const replyEmail = list(s(st, 'studentReplyTo') || s(st, 'email'))[0];
+  await sendMail(st, {
+    to: [to], subject: fill(tpl(st, 'studentReplySubjectTpl'), v).replace(/\s+/g, ' ').trim(),
+    html: layout(st, v.site, bodyHtml(body, v, l, accent(st)), ''), text: bodyText(body, v, l),
+    replyTo: replyEmail ? { email: replyEmail, name: v.site } : undefined,
+  });
+}
+
+export type PaymentForAlert = { amount: number; courseTitle: string; paymentId: string; name?: string | null; email?: string | null; phone?: string | null };
+
+/** Payment received: email to the institute and (optionally) a confirmation to the student. Never throws. */
+export async function notifyPayment(p: PaymentForAlert, lead: LeadForAlert | null) {
+  let st: Settings;
+  try { st = await getSettings(); } catch (e) { console.error('[notify] settings', e); return; }
+  const l: LeadForAlert = lead ?? { id: 0, type: 'enquiry', name: p.name || 'Student', phone: p.phone || '', email: p.email };
+  const v = leadVars(st, { ...l, course: p.courseTitle }, {
+    amount: (p.amount / 100).toLocaleString('en-IN'), paymentId: p.paymentId,
+    name: p.name || l.name, email: p.email || l.email || '', phone: p.phone || l.phone,
+  });
+  v.firstName = v.name.trim().split(/\s+/)[0] || v.name;
+  const jobs: Promise<unknown>[] = [];
+  if (flag(st, 'notifyPaymentEmail')) {
+    const b = tpl(st, 'paymentBodyTpl');
+    jobs.push(sendMail(st, { to: instituteTo(st), subject: fill(tpl(st, 'paymentSubjectTpl'), v), html: layout(st, `Payment received — ₹${v.amount}`, bodyHtml(b, v, null, accent(st)), ''), text: bodyText(b, v, null) })
+      .catch((e) => console.error(`[notify] payment email ${v.leadId} failed:`, (e as Error).message)));
+  }
+  if (flag(st, 'studentPaymentEmail') && v.email && /@/.test(v.email)) {
+    const b = tpl(st, 'studentPaymentBodyTpl');
+    jobs.push(sendMail(st, { to: [v.email], subject: fill(tpl(st, 'studentPaymentSubjectTpl'), v), html: layout(st, v.site, bodyHtml(b, v, null, accent(st)), ''), text: bodyText(b, v, null) })
+      .catch((e) => console.error(`[notify] student payment email ${v.leadId} failed:`, (e as Error).message)));
+  }
+  await Promise.all(jobs);
 }
 
 /** Short plain-text alert for WhatsApp / Telegram. */
@@ -119,7 +216,7 @@ function shortText(l: LeadForAlert) {
     .map(([k, v]) => `${k}: ${String(v).replace(/\s+/g, ' ').slice(0, k === 'Message' ? 300 : 120)}`).join('\n');
   const wa = digits(l.phone);
   const waLink = wa ? `\nWhatsApp student: https://wa.me/${wa.length === 10 ? '91' + wa : wa}` : '';
-  return `${l.notes?.startsWith('Possible spam') ? '[Possible spam] ' : ''}New ${TYPE_LABEL[l.type] ?? 'enquiry'} (${leadId(l.id)})\n\n${body}\n${waLink}\nOpen in admin: ${leadUrl(l)}`;
+  return `${isSpam(l) ? '[Possible spam] ' : ''}New ${TYPE_LABEL[l.type] ?? 'enquiry'} (${leadId(l.id)})\n\n${body}\n${waLink}\nOpen in admin: ${leadUrl(l)}`;
 }
 
 /** CallMeBot (free): one "number apikey" pair per line — each number gets its own key from CallMeBot. */
@@ -180,6 +277,8 @@ export async function notifyNewLead(l: LeadForAlert) {
   const jobs: Promise<void>[] = [];
   if (flag(st, 'notifyEmailEnabled')) jobs.push(sendLeadEmail(st, l).catch((e) => console.error(`[notify] email ${leadId(l.id)} failed:`, (e as Error).message)));
   if (flag(st, 'notifyWhatsappEnabled')) jobs.push(sendLeadWhatsapp(st, l).catch((e) => console.error(`[notify] whatsapp ${leadId(l.id)} failed:`, (e as Error).message)));
+  if (flag(st, 'studentReplyEnabled') && l.email && !isSpam(l) && (l.type !== 'career' || flag(st, 'studentReplyCareer')))
+    jobs.push(sendStudentReply(st, l).catch((e) => console.error(`[notify] student reply ${leadId(l.id)} failed:`, (e as Error).message)));
   if (flag(st, 'notifyTelegramEnabled')) jobs.push(sendLeadTelegram(st, l).catch((e) => console.error(`[notify] telegram ${leadId(l.id)} failed:`, (e as Error).message)));
   await Promise.all(jobs);
 }

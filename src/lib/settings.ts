@@ -1,6 +1,7 @@
 import { cache } from 'react';
 import { eq } from 'drizzle-orm';
 import { db, schema } from '@/db';
+import { EMAIL_DEFAULTS } from '@/lib/email-defaults';
 
 export type FieldType = 'text' | 'textarea' | 'lines' | 'markdown' | 'number' | 'boolean' | 'image' | 'select' | 'date' | 'url' | 'secret' | 'blocks' | 'time';
 
@@ -20,6 +21,10 @@ export interface FieldDef {
   group?: string;
   /** quick-pick values offered under a text input (the admin can still type anything) */
   suggestions?: string[];
+  /** value shown in the admin form while nothing is saved yet (e.g. a default email template) */
+  default?: string;
+  /** textarea height */
+  rows?: number;
 }
 
 export interface SettingsGroup {
@@ -214,14 +219,35 @@ export const settingsGroups: SettingsGroup[] = [
     ],
   },
   {
-    key: 'notifications', title: 'Lead alerts (email, WhatsApp, Telegram)',
+    key: 'notifications', title: 'Lead alerts & emails (email, WhatsApp, Telegram)',
     description: 'Every new enquiry, demo request, Ausbildung / Study in Germany form, franchise enquiry and job application is sent to the institute by email, WhatsApp and/or Telegram — all free services. Save first, then use the test buttons at the bottom.',
     fields: [
-      { name: 'notifyEmailEnabled', label: 'Send an email for every new lead', type: 'boolean', group: 'Email' },
-      { name: 'notifyEmailTo', label: 'Send to (email addresses, comma separated)', type: 'text', placeholder: 'info@edexo.in', help: 'Empty = the email in Brand & contact.', group: 'Email' },
-      { name: 'emailProvider', label: 'Email service', type: 'select', options: [{ value: 'brevo', label: 'Brevo (free 300 emails/day)' }, { value: 'resend', label: 'Resend (free 100 emails/day)' }], group: 'Email', help: 'The hosting plan does not allow SMTP, so mail goes through one of these services.' },
-      { name: 'emailApiKey', label: 'Email service API key', type: 'secret', help: 'Brevo: Settings → SMTP & API → API keys (starts with xkeysib-). Resend: API Keys. Leave empty to keep the saved key.', group: 'Email' },
-      { name: 'emailFrom', label: 'From', type: 'text', placeholder: 'Edexo Website <website@edexo.in>', help: 'Must be a verified sender / domain in the email service. Replies go to the student\'s email.', group: 'Email' },
+      { name: 'notifyEmailEnabled', label: 'Send an email for every new lead', type: 'boolean', group: 'Email service' },
+      { name: 'emailProvider', label: 'Email service', type: 'select', options: [{ value: 'resend', label: 'Resend (free 100 emails/day, 3,000/month)' }, { value: 'brevo', label: 'Brevo (free 300 emails/day)' }], group: 'Email service', help: 'The hosting plan does not allow SMTP, so mail goes through one of these services.' },
+      { name: 'emailApiKey', label: 'Email service API key', type: 'secret', help: 'Resend: resend.com → API Keys (starts with re_). Brevo: Settings → SMTP & API → API keys (starts with xkeysib-). Leave empty to keep the saved key.', group: 'Email service' },
+      { name: 'emailFrom', label: 'From', type: 'text', placeholder: 'Edexo <website@edexo.in>', help: 'Resend: the domain (edexo.in) must be verified in Resend → Domains. Until then use "Edexo <onboarding@resend.dev>" — that only delivers to the email you signed up to Resend with.', group: 'Email service' },
+      { name: 'notifyEmailTo', label: 'Send lead alerts to (email addresses, comma separated)', type: 'text', placeholder: 'info@edexo.in', help: 'Empty = the email in Brand & contact.', group: 'Email service' },
+      { name: 'emailBrandColor', label: 'Email header colour', type: 'text', placeholder: '#1B2A6B', group: 'Email service' },
+      { name: 'emailButtonColor', label: 'Email button colour', type: 'text', placeholder: '#C24E17', group: 'Email service' },
+
+      { name: 'emailSubjectTpl', label: 'Subject', type: 'text', default: EMAIL_DEFAULTS.emailSubjectTpl, group: 'Email template — lead alert to the institute', help: 'Placeholders: {{name}} {{firstName}} {{phone}} {{email}} {{course}} {{language}} {{level}} {{mode}} {{centre}} {{batch}} {{timing}} {{message}} {{leadId}} {{type}} {{site}} {{sitePhone}} {{siteEmail}} {{date}}.' },
+      { name: 'emailHeadingTpl', label: 'Heading (coloured band)', type: 'text', default: EMAIL_DEFAULTS.emailHeadingTpl, group: 'Email template — lead alert to the institute' },
+      { name: 'emailBodyTpl', label: 'Message', type: 'textarea', rows: 8, default: EMAIL_DEFAULTS.emailBodyTpl, group: 'Email template — lead alert to the institute', help: 'Blank line = new paragraph. {{details}} = table with every field the student filled. A line like [Button text](https://…) becomes a button. Open in admin / WhatsApp / Call buttons are added on top automatically. ' + 'Placeholders: {{name}} {{firstName}} {{phone}} {{email}} {{course}} {{language}} {{level}} {{mode}} {{centre}} {{batch}} {{timing}} {{message}} {{leadId}} {{type}} {{site}} {{sitePhone}} {{siteEmail}} {{date}}.' },
+      { name: 'emailFooterTpl', label: 'Small text at the bottom', type: 'textarea', default: EMAIL_DEFAULTS.emailFooterTpl, group: 'Email template — lead alert to the institute' },
+
+      { name: 'studentReplyEnabled', default: 'false', label: 'Send an automatic thank-you email to the student (when they enter an email)', type: 'boolean', group: 'Auto-reply to the student' },
+      { name: 'studentReplyCareer', default: 'false', label: 'Also send it to job applicants (uses the job-application message below)', type: 'boolean', group: 'Auto-reply to the student' },
+      { name: 'studentReplyTo', label: 'When the student replies, send the reply to', type: 'text', placeholder: 'info@edexo.in', help: 'Empty = the email in Brand & contact.', group: 'Auto-reply to the student' },
+      { name: 'studentReplySubjectTpl', label: 'Subject', type: 'text', default: EMAIL_DEFAULTS.studentReplySubjectTpl, group: 'Auto-reply to the student' },
+      { name: 'studentReplyBodyTpl', label: 'Message (enquiries, demos, Ausbildung, Study in Germany, franchise)', type: 'textarea', rows: 12, default: EMAIL_DEFAULTS.studentReplyBodyTpl, group: 'Auto-reply to the student', help: 'Extra placeholder: {{thankYouLink}} = the student\'s own Thank-you / Pay Now page. ' + 'Placeholders: {{name}} {{firstName}} {{phone}} {{email}} {{course}} {{language}} {{level}} {{mode}} {{centre}} {{batch}} {{timing}} {{message}} {{leadId}} {{type}} {{site}} {{sitePhone}} {{siteEmail}} {{date}}.' },
+      { name: 'studentReplyCareerBodyTpl', label: 'Message for job applicants ({{course}} = position)', type: 'textarea', rows: 8, default: EMAIL_DEFAULTS.studentReplyCareerBodyTpl, group: 'Auto-reply to the student' },
+
+      { name: 'notifyPaymentEmail', label: 'Email the institute when a fee is paid online (Razorpay)', type: 'boolean', group: 'Payment emails' },
+      { name: 'paymentSubjectTpl', label: 'Subject (to the institute)', type: 'text', default: EMAIL_DEFAULTS.paymentSubjectTpl, group: 'Payment emails', help: 'Extra placeholders: {{amount}} {{paymentId}} {{adminLink}}.' },
+      { name: 'paymentBodyTpl', label: 'Message (to the institute)', type: 'textarea', rows: 10, default: EMAIL_DEFAULTS.paymentBodyTpl, group: 'Payment emails' },
+      { name: 'studentPaymentEmail', default: 'false', label: 'Send a payment confirmation email to the student', type: 'boolean', group: 'Payment emails' },
+      { name: 'studentPaymentSubjectTpl', label: 'Subject (to the student)', type: 'text', default: EMAIL_DEFAULTS.studentPaymentSubjectTpl, group: 'Payment emails' },
+      { name: 'studentPaymentBodyTpl', label: 'Message (to the student)', type: 'textarea', rows: 10, default: EMAIL_DEFAULTS.studentPaymentBodyTpl, group: 'Payment emails' },
       { name: 'notifyWhatsappEnabled', label: 'Send a WhatsApp message for every new lead (CallMeBot, free)', type: 'boolean', group: 'WhatsApp' },
       { name: 'callmebotRecipients', label: 'WhatsApp numbers and CallMeBot keys (one per line: number apikey)', type: 'lines', placeholder: '919999904123 1234567',
         help: 'Each number gets its own free key: on that phone, save the CallMeBot number shown on callmebot.com (WhatsApp → "Personal" API) and send it the message "I allow callmebot to send me messages". The key comes back on WhatsApp. Free and unofficial — messages can sometimes be late, so keep email on too.', group: 'WhatsApp' },

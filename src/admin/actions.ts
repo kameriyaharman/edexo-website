@@ -267,7 +267,7 @@ export async function removeAdmin(fd: FormData) {
 
 export async function sendTestAlert(_: FormState, fd: FormData): Promise<FormState> {
   await requireAdmin();
-  const { getSettings } = await import('@/lib/settings');
+  const { getSettings, s } = await import('@/lib/settings');
   const n = await import('@/lib/notify');
   const st = await getSettings();
   const channel = String(fd.get('channel') ?? '');
@@ -282,11 +282,20 @@ export async function sendTestAlert(_: FormState, fd: FormData): Promise<FormSta
       level: 'A1', course: 'German A1', mode: 'Online', branch: 'Rohini', message: 'This is a test alert from Admin → Lead alerts.',
       source: 'Admin test', pageUrl: '', notes: '',
     };
-    if (channel === 'email') await n.sendLeadEmail(st, lead);
+    const testTo = String(fd.get('testTo') ?? '').trim();
+    if (testTo && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(testTo)) return { error: 'Enter a valid email address to send the test to.' };
+    if (channel === 'email') await n.sendLeadEmail(st, lead, testTo ? [testTo] : undefined);
+    else if (channel === 'student') {
+      if (!testTo) return { error: 'Enter your email in "Send email tests to" — the auto-reply goes to the student, so the test needs an address.' };
+      await n.sendStudentReply(st, { ...lead, email: testTo }, testTo);
+    } else if (channel === 'payment') {
+      await n.sendMail(st, { to: testTo ? [testTo] : (s(st, 'notifyEmailTo') || s(st, 'email')).split(/[,;\n]+/).map((x) => x.trim()).filter(Boolean),
+        subject: 'Test: payment email', html: '<p>Payment emails are working. Real payment emails use the templates in Admin → Lead alerts → Payment emails.</p>', text: 'Payment emails are working.' });
+    }
     else if (channel === 'whatsapp') await n.sendLeadWhatsapp(st, lead);
     else if (channel === 'telegram') await n.sendLeadTelegram(st, lead);
     else return { error: 'Unknown test' };
-    return { ok: `Test ${channel === 'email' ? 'email' : channel === 'whatsapp' ? 'WhatsApp' : 'Telegram'} sent. Check the inbox / phone.` };
+    return { ok: `Test ${({ email: 'lead email', student: 'auto-reply', payment: 'payment email', whatsapp: 'WhatsApp', telegram: 'Telegram' } as Record<string, string>)[channel]} sent. Check the inbox / phone (and the spam folder).` };
   } catch (e) {
     return { error: (e as Error).message };
   }

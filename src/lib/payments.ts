@@ -1,6 +1,6 @@
 import 'server-only';
 import crypto from 'node:crypto';
-import { eq } from 'drizzle-orm';
+import { and, eq, ne } from 'drizzle-orm';
 import { db, schema } from '@/db';
 import { getSettings, s, type Settings } from '@/lib/settings';
 import { getCourses, getPrograms, type CourseRow } from '@/lib/data';
@@ -65,13 +65,20 @@ export async function markPaid(orderId: string, paymentId: string, method = '') 
   const [p] = await db.select().from(schema.payments).where(eq(schema.payments.orderId, orderId)).limit(1);
   if (!p) return null;
   if (p.status !== 'paid') {
-    await db.update(schema.payments).set({ status: 'paid', paymentId, method, error: '', updatedAt: new Date() }).where(eq(schema.payments.id, p.id));
+    // only the first caller (checkout verify or webhook) flips it to paid — prevents double notes / double emails
+    const won = await db.update(schema.payments).set({ status: 'paid', paymentId, method, error: '', updatedAt: new Date() })
+      .where(and(eq(schema.payments.id, p.id), ne(schema.payments.status, 'paid'))).returning({ id: schema.payments.id });
+    if (!won.length) return p;
     if (p.enquiryId) {
       const [e] = await db.select({ notes: schema.enquiries.notes }).from(schema.enquiries).where(eq(schema.enquiries.id, p.enquiryId)).limit(1);
       const line = `Paid ₹${(p.amount / 100).toLocaleString('en-IN')} online for ${p.courseTitle} (${paymentId}) on ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}`;
       await db.update(schema.enquiries).set({ status: 'converted', notes: [e?.notes, line].filter(Boolean).join('\n'), updatedAt: new Date() })
         .where(eq(schema.enquiries.id, p.enquiryId));
     }
+    // payment emails (institute + student), never blocks or fails the payment
+    const lead = p.enquiryId ? (await db.select().from(schema.enquiries).where(eq(schema.enquiries.id, p.enquiryId)).limit(1))[0] ?? null : null;
+    import('@/lib/notify').then((n) => n.notifyPayment({ amount: p.amount, courseTitle: p.courseTitle, paymentId, name: p.name, email: p.email, phone: p.phone }, lead))
+      .catch((e) => console.error('[notify] payment', e));
   }
   return p;
 }

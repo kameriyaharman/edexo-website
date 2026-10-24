@@ -169,7 +169,7 @@ export function Field(p: FieldProps) {
   let input: React.ReactNode;
   switch (type) {
     case 'textarea':
-      input = maxLength ? <Counted {...p} area /> : <textarea id={`f-${name}`} name={name} defaultValue={str} required={required} placeholder={placeholder} rows={3} />;
+      input = maxLength ? <Counted {...p} area /> : <textarea id={`f-${name}`} name={name} defaultValue={str} required={required} placeholder={placeholder} rows={p.rows ?? 3} />;
       break;
     case 'lines':
       input = <textarea id={`f-${name}`} name={name} defaultValue={str} required={required} placeholder={placeholder ?? 'One item per line'} rows={4} />;
