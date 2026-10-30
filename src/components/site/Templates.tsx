@@ -14,6 +14,7 @@ import { CareerForm, FranchiseForm } from './LeadForms';
 import { JsonLd } from './StructuredData';
 import { BatchesStrip } from './Batches';
 import { ROHINI_GERMAN_PATH } from './GermanRohiniPage';
+import { courseFacts } from '@/lib/course-seo';
 
 const isGerman = (slug?: string | null, category?: string | null) => !!slug && slug.startsWith('german') && category !== 'kids';
 
@@ -199,7 +200,10 @@ export async function ProgramPage({ p }: { p: Program }) {
 export async function CoursePage({ c, program }: { c: CourseRow; program: Program | null }) {
   const [st, reasons, branches] = await Promise.all([getSettings(), getReasons(), getBranches()]);
   const img = mediaUrl(c.imageId);
-  const faqs = parseFaqs(c.faqs);
+  const facts = courseFacts(c, program, branches.map((b) => b.name));
+  const own = parseFaqs(c.faqs);
+  const seen = new Set(own.map((f) => f.q.toLowerCase()));
+  const faqs = [...own, ...facts.faqs.filter((f) => !seen.has(f.q.toLowerCase()))];
   const siblings = program?.courses ?? [];
   const idx = siblings.findIndex((x) => x.id === c.id);
   const prev = idx > 0 ? siblings[idx - 1] : null;
@@ -223,6 +227,7 @@ export async function CoursePage({ c, program }: { c: CourseRow; program: Progra
   return (
     <>
       <JsonLd data={jsonLd} />
+      {faqs.length > 0 && <JsonLd data={{ '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: faqs.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })) }} />}
       <PageHero title={c.title} subtitle={c.shortDesc}
         crumbs={[{ label: 'Home', href: '/' }, { label: 'Courses & Fees', href: '/courses' }, ...(program ? [{ label: program.name, href: `/${program.slug}` }] : []), { label: c.level || c.title }]} />
       <section className="section">
@@ -230,6 +235,7 @@ export async function CoursePage({ c, program }: { c: CourseRow; program: Progra
           <div className="course-main">
             {img && <img className="course-cover" src={img} alt={isGerman(program?.slug, program?.category) ? `${c.title} course — German classes at Edexo, Rohini Delhi` : `${c.title} course at Edexo, Delhi`} />}
             <div className="prose" dangerouslySetInnerHTML={{ __html: renderMarkdown(c.description) }} />
+            {block(`${c.title} at a glance`, 'info', <div className="prose">{facts.overview.map((t, i) => <p key={i}>{t}</p>)}</div>)}
             {c.whoShouldJoin && block('Who should join', 'users', <p>{c.whoShouldJoin}</p>)}
             {splitLines(c.outcomes).length > 0 && block('Learning outcomes', 'target', <Ticks items={splitLines(c.outcomes)} />)}
             {c.studyMaterial && block('Study material', 'book', <p>{c.studyMaterial}</p>)}

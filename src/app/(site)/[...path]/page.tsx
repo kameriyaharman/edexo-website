@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound, permanentRedirect, redirect } from 'next/navigation';
-import { getCourse, getLocation, getPage, getProgram } from '@/lib/data';
+import { getBranches, getCourse, getLocation, getPage, getProgram } from '@/lib/data';
+import { courseFacts } from '@/lib/course-seo';
 import { LocationPage, placeName } from '@/components/site/LocationPage';
 import { findRedirect, pageMeta } from '@/lib/seo';
 import { CoursePage, LandingPage, ProgramPage } from '@/components/site/Templates';
@@ -10,7 +11,8 @@ type Props = { params: Promise<{ path: string[] }> };
 
 /** One URL space for pages, programs and level courses: /study-in-germany, /german-language-course, /german-a1-course. */
 async function resolve(params: Props['params']) {
-  const parts = (await params).path.map(decodeURIComponent);
+  // a malformed %-escape in an old/bot URL must give a 404, never a 500
+  const parts = (await params).path.map((x) => { try { return decodeURIComponent(x); } catch { return x; } });
   if (parts.length !== 1) return { parts };
   const slug = parts[0];
   const page = await getPage(slug);
@@ -32,9 +34,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
   if ('course' in r && r.course) {
     const c = r.course;
+    const f = courseFacts(c, r.program ?? null, (await getBranches()).map((b) => b.name));
     return pageMeta({
-      title: c.seoTitle || `${c.title} Course — Fees & Duration`,
-      description: c.seoDescription || `${c.shortDesc ?? ''} ${c.title} at Edexo — online and offline classes with a free demo.`.trim(),
+      title: c.seoTitle || f.seoTitle,
+      description: c.seoDescription || f.seoDescription,
       path: `/${c.slug}`, imageId: c.imageId,
     });
   }

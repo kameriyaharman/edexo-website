@@ -50,17 +50,36 @@ export async function pageMeta(opts: {
   };
 }
 
-/** Looks up an admin-managed redirect for a path (with or without trailing slash). */
-export async function findRedirect(path: string): Promise<{ to: string; permanent: boolean } | null> {
+async function lookupRedirect(path: string) {
   const clean = ('/' + path.replace(/^\/+/, '')).replace(/\/+$/, '') || '/';
   const candidates = [clean, clean + '/', clean.toLowerCase()];
   for (const c of candidates) {
     const [r] = await db.select().from(schema.redirects)
       .where(and(eq(schema.redirects.fromPath, c), eq(schema.redirects.active, true))).limit(1);
-    if (r) {
-      db.update(schema.redirects).set({ hits: sql`${schema.redirects.hits} + 1` }).where(eq(schema.redirects.id, r.id)).catch(() => {});
-      return { to: r.toPath, permanent: r.permanent };
-    }
+    if (r) return r;
   }
   return null;
+}
+
+/**
+ * Looks up an admin-managed redirect for a path (with or without trailing slash).
+ * Chains (A → B → C) are followed to the final URL so Google always sees a single hop.
+ */
+export async function findRedirect(path: string): Promise<{ to: string; permanent: boolean } | null> {
+  const first = await lookupRedirect(path);
+  if (!first) return null;
+  db.update(schema.redirects).set({ hits: sql`${schema.redirects.hits} + 1` }).where(eq(schema.redirects.id, first.id)).catch(() => {});
+  let to = first.toPath;
+  let permanent = first.permanent;
+  const seen = new Set([path.replace(/\/+$/, '') || '/']);
+  for (let i = 0; i < 5 && to.startsWith('/') && !to.includes('?') && !seen.has(to); i++) {
+    seen.add(to);
+    const next = await lookupRedirect(to);
+    if (!next) break;
+    to = next.toPath;
+    permanent = permanent && next.permanent;
+  }
+  // own-site absolute targets → path, so a redirect never sends Google to http:// or the bare domain
+  to = to.replace(/^https?:\/\/(www\.)?edexo\.in(?=\/|$)/i, '') || '/';
+  return { to, permanent };
 }
