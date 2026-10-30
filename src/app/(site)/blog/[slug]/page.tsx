@@ -15,6 +15,8 @@ import { permanentRedirect, redirect } from 'next/navigation';
 
 type Props = { params: Promise<{ slug: string }> };
 
+const STOP = new Set(['the', 'and', 'for', 'with', 'how', 'why', 'what', 'your', 'you', 'are', 'from', 'into', 'about', 'learn', 'learning', 'guide', 'blog', 'edexo', 'tips', 'best']);
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const p = await getPost((await params).slug);
   if (!p) return {};
@@ -27,6 +29,19 @@ export default async function PostPage({ params }: Props) {
   if (!p) {
     const r = await findRedirect(`/blog/${slug}`);
     if (r) (r.permanent ? permanentRedirect : redirect)(r.to);
+    // old-site article URLs: send them to the current article with clearly the same topic (else a real 404)
+    const words = (x: string) => new Set(x.toLowerCase().split(/[^a-z0-9]+/).filter((w) => w.length > 2 && !STOP.has(w)));
+    const want = words(slug);
+    if (want.size >= 2) {
+      let best: { slug: string; score: number } | null = null;
+      for (const post of await getPosts()) {
+        const have = words(`${post.slug} ${post.title}`);
+        const common = [...want].filter((w) => have.has(w)).length;
+        const score = common / want.size;
+        if (common >= 2 && (!best || score > best.score)) best = { slug: post.slug, score };
+      }
+      if (best && best.score >= 0.6) permanentRedirect(`/blog/${best.slug}`);
+    }
     notFound();
   }
   const img = mediaUrl(p.coverId);

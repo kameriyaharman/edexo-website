@@ -26,7 +26,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${base}/areas-we-serve`, priority: 0.6 },
     ...locs.map((l) => ({ url: `${base}/${l.slug}`, lastModified: l.updatedAt, priority: 0.7 })),
     ...programs.map((p) => ({ url: `${base}/${p.slug}`, lastModified: p.updatedAt, priority: 0.9, ...(p.imageId ? { images: [base + mediaUrl(p.imageId)] } : {}) })),
-    ...courses.map((c) => ({ url: `${base}/${c.slug}`, lastModified: c.updatedAt, priority: 0.8, ...(c.imageId ? { images: [base + mediaUrl(c.imageId)] } : {}) })),
+    ...courses.filter((c) => programs.some((p) => p.id === c.languageId)).map((c) => ({ url: `${base}/${c.slug}`, lastModified: c.updatedAt, priority: 0.8, ...(c.imageId ? { images: [base + mediaUrl(c.imageId)] } : {}) })),
     ...posts.map((p) => ({ url: `${base}/blog/${p.slug}`, lastModified: p.updatedAt, priority: 0.6 })),
     ...pages.filter((p) => p.slug !== 'about').map((p) => ({ url: `${base}/${p.slug}`, lastModified: p.updatedAt, priority: p.kind === 'legal' ? 0.2 : p.kind === 'service' || p.kind === 'exam' ? 0.8 : 0.6 })),
     { url: `${base}/about`, priority: 0.6 },

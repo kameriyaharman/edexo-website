@@ -10,7 +10,15 @@ export async function middleware(req: NextRequest) {
   if (!isAdmin && !pathname.startsWith('/api/') && req.method !== 'GET' && req.method !== 'HEAD') {
     return new NextResponse('Method Not Allowed', { status: 405, headers: { allow: 'GET, HEAD' } });
   }
-  if (!isAdmin) return NextResponse.next();
+  if (!isAdmin) {
+    const host = (req.headers.get('x-forwarded-host') || req.headers.get('host') || '').toLowerCase();
+    if (host.endsWith('.up.railway.app')) {
+      const res = NextResponse.next();
+      res.headers.set('x-robots-tag', 'noindex, nofollow');
+      return res;
+    }
+    return NextResponse.next();
+  }
 
   // Cheap first gate for /admin. Every admin page and action also calls requireAdmin() server-side.
   if (pathname === '/admin/login') return NextResponse.next();
