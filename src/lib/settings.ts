@@ -188,6 +188,7 @@ export const settingsGroups: SettingsGroup[] = [
   },
   {
     key: 'seo', title: 'SEO',
+    description: 'Site-wide SEO. To edit the Google title and description of every page, course, program, location and blog post in one list, open SEO – all pages.',
     fields: [
       { name: 'seoTitle', label: 'Home page title', type: 'text', maxLength: 70, help: 'Shown as the blue link in Google for the home page.' },
       { name: 'seoDescription', label: 'Home page description', type: 'textarea', maxLength: 200, help: 'Also used for pages that have no description of their own.' },
@@ -197,6 +198,12 @@ export const settingsGroups: SettingsGroup[] = [
       { name: 'blogSeoDescription', label: 'Blog page — description', type: 'textarea', maxLength: 170 },
       { name: 'contactSeoTitle', label: 'Contact page — title', type: 'text', maxLength: 70 },
       { name: 'contactSeoDescription', label: 'Contact page — description', type: 'textarea', maxLength: 170 },
+      { name: 'faqsSeoTitle', label: 'FAQs page — title', type: 'text', maxLength: 70 },
+      { name: 'faqsSeoDescription', label: 'FAQs page — description', type: 'textarea', maxLength: 170 },
+      { name: 'areasSeoTitle', label: 'Areas We Serve page — title', type: 'text', maxLength: 70 },
+      { name: 'areasSeoDescription', label: 'Areas We Serve page — description', type: 'textarea', maxLength: 170 },
+      { name: 'enrollSeoTitle', label: 'Enroll page — title', type: 'text', maxLength: 70 },
+      { name: 'enrollSeoDescription', label: 'Enroll page — description', type: 'textarea', maxLength: 170 },
       { name: 'ogImageId', label: 'Social share image (1200×630)', type: 'image', help: 'Shown when a link is shared on WhatsApp, Facebook, LinkedIn.' },
       { name: 'robotsIndex', label: 'Allow Google to index the website', type: 'boolean', help: 'Keep ON for the live site. The Railway preview address is never indexed.' },
       { name: 'googleVerification', label: 'Google Search Console verification code', type: 'text', placeholder: 'content value of the google-site-verification tag' },

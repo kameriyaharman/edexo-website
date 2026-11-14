@@ -621,6 +621,11 @@ async function upgrades() {
     }
   });
 
+  await apply('2026-11-gtm', async (d) => {
+    // client's Google Tag Manager container (Admin → Analytics & tracking); only set if nobody entered one
+    if (!String(d.gtmId || '').trim()) d.gtmId = 'GTM-K3XJPMCS';
+  });
+
   data._upgrades = [...done];
   await client.query('update settings set data = $1, updated_at = now() where id = 1', [JSON.stringify(data)]);
 }

@@ -1,3 +1,4 @@
+import { getSettings, s } from '@/lib/settings';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { PageHero } from '@/components/site/Blocks';
@@ -9,9 +10,10 @@ import { pageMeta } from '@/lib/seo';
 import { Icon } from '@/components/Icon';
 
 export async function generateMetadata(): Promise<Metadata> {
+  const st = await getSettings();
   return pageMeta({
-    title: 'Areas We Serve — Language Classes across North & North-West Delhi | Edexo',
-    description: 'Edexo German and foreign language classes for students in Rohini, Pitampura, Model Town, North Campus, Burari, Narela, Sonipat and more — online and at our Delhi centres.',
+    title: s(st, 'areasSeoTitle').trim() || 'Areas We Serve — Language Classes across North & North-West Delhi | Edexo',
+    description: s(st, 'areasSeoDescription').trim() || 'Edexo German and foreign language classes for students in Rohini, Pitampura, Model Town, North Campus, Burari, Narela, Sonipat and more — online and at our Delhi centres.',
     path: '/areas-we-serve',
   });
 }

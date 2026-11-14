@@ -1,3 +1,4 @@
+import { getSettings, s } from '@/lib/settings';
 import type { Metadata } from 'next';
 import { PageHero } from '@/components/site/Blocks';
 import { EnquiryBand } from '@/components/site/Sections';
@@ -8,7 +9,8 @@ import { pageMeta } from '@/lib/seo';
 import { Icon } from '@/components/Icon';
 
 export async function generateMetadata(): Promise<Metadata> {
-  return pageMeta({ title: 'FAQs — Courses, Fees, Online Classes & Exams', description: 'Answers to common questions about Edexo language courses, fees, online classes, exam preparation and study abroad.', path: '/faqs' });
+  const st = await getSettings();
+  return pageMeta({ title: s(st, 'faqsSeoTitle').trim() || 'FAQs — Courses, Fees, Online Classes & Exams', description: s(st, 'faqsSeoDescription').trim() || 'Answers to common questions about Edexo language courses, fees, online classes, exam preparation and study abroad.', path: '/faqs' });
 }
 
 export default async function FaqsPage() {

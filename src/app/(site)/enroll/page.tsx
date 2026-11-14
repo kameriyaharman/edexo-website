@@ -1,3 +1,4 @@
+import { getSettings, s } from '@/lib/settings';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { PageHero } from '@/components/site/Blocks';
@@ -8,7 +9,8 @@ import { Icon } from '@/components/Icon';
 import { Ticks } from '@/components/site/Platform';
 
 export async function generateMetadata(): Promise<Metadata> {
-  return pageMeta({ title: 'Enroll Now — Choose Your Course & Pay Online', description: 'Enroll in an Edexo language course: choose your language and level, online or offline, and pay securely online.', path: '/enroll' });
+  const st = await getSettings();
+  return pageMeta({ title: s(st, 'enrollSeoTitle').trim() || 'Enroll Now — Choose Your Course & Pay Online', description: s(st, 'enrollSeoDescription').trim() || 'Enroll in an Edexo language course: choose your language and level, online or offline, and pay securely online.', path: '/enroll' });
 }
 
 export default async function EnrollPage({ searchParams }: { searchParams: Promise<{ course?: string; program?: string }> }) {
